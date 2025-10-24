@@ -112,138 +112,136 @@
             xhr.open("GET", "{{ route('client.wishList.count') }}", true);
             xhr.addEventListener("load", function () {
                 var response = JSON.parse(xhr.response);
-                var res = response.status === 1 ? response.data : 0;
                 var elements = document.getElementsByClassName("wishcount");
                 for (const el of elements)
-                    el.innerHTML = response.data.count;
+                    el.innerHTML = response.data?.count || 0;
                 var totals = document.getElementsByClassName("wishlist-total");
                 for (const el of totals)
-                    el.innerHTML = response.data.sum;
+                    el.innerHTML = response.data?.sum || 0;
                 
             });
 
             xhr.send();
         }
 
-      function getCartFromServer() {
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", "{{ route('client.cart.api') }}", true);
-        xhr.addEventListener("load", function () {
-            var response = JSON.parse(xhr.response);
-        });
+        function getCartFromServer() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "{{ route('client.cart.api') }}", true);
+            xhr.addEventListener("load", function () {
+                var response = JSON.parse(xhr.response);
+            });
 
-        xhr.send();
-      }
-      
-      function openCart() {
-          setTimeout(function () {
-              $("body").addClass("no-scroll cartOpen");
-              $(".overlay").addClass("cart-overlay");
-          }, 100);
-      }
-
-      function getUserCartFromStorage() {
-          var userCart = {};
-          var userCartString = localStorage.getItem("userCart");
-          if (userCartString) {
-              userCart = JSON.parse(userCartString);
-          }
-
-          return userCart;
-      }
-
-      function sendCartToServer(id, type) {
-          var formData = createFormData({
-              _token: "{{csrf_token()}}",
-              product_id: id,
-              type,
-          });
-
-          var params = {
-              method: "POST",
-              route: "{{ route('client.addToCart') }}",
-              formData,
-          };
-
-          sendRequest(params);
-      }
-
-      function addToCart(id, image, title, priceBefore, priceAfter) {
-          var userCart = getUserCartFromStorage();
-
-          if (!Object.keys(userCart).includes(id)) {
-              userCart[id] = {
-                  image,
-                  title,
-                  priceBefore,
-                  priceAfter,
-              };
-              localStorage.setItem("userCart", JSON.stringify(userCart));
-          }
-
-          sendCartToServer(id, "inc");
-          reloadPageIfInCart();
-      }
-
-      function removeFromCart(id) {
-          var userCart = getUserCartFromStorage();
-
-          if (Object.keys(userCart).includes(id)) {
-              delete userCart[id];
-              localStorage.setItem("userCart", JSON.stringify(userCart));
-          }
-
-          // remove from cart page
-          var elm = document.getElementById(`cart-item-${id}`);
-          if (elm) elm.remove();
-            
-          sendCartToServer(id, "dec");
-          reloadPageIfInCart();
-      }
-
-    function reloadPageIfInCart() {
-        if (window.location.pathname === "/cart") {
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } else {
-            updateCart();
-            openCart();
+            xhr.send();
         }
-    }
+        
+        function openCart() {
+            setTimeout(function () {
+                $("body").addClass("no-scroll cartOpen");
+                $(".overlay").addClass("cart-overlay");
+            }, 100);
+        }
 
-    function manipulateWishList(id) {
-        var formData = createFormData({
-              _token: "{{csrf_token()}}",
-              product_id: id
-          });
+        function getUserCartFromStorage() {
+            var userCart = {};
+            var userCartString = localStorage.getItem("userCart");
+            if (userCartString) {
+                userCart = JSON.parse(userCartString);
+            }
 
-          var params = {
-              method: "POST",
-              route: "{{ route('client.wishList.add') }}",
-              formData,
-          };
+            return userCart;
+        }
 
-          sendRequest(params);
+        function sendCartToServer(id, type) {
+            var formData = createFormData({
+                _token: "{{csrf_token()}}",
+                product_id: id,
+                type,
+            });
 
-          if (window.location.pathname === "/wishlist") {
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } else {
-            getWishListCount();
-            var wishable = document.getElementById(`product-wishable-${id}`);
-            var fill_rule = wishable.getAttribute("fill-rule");
-            if (fill_rule === "evenodd") {
-                wishable.setAttribute("fill-rule", "nonezero");
+            var params = {
+                method: "POST",
+                route: "{{ route('client.addToCart') }}",
+                formData,
+            };
+
+            sendRequest(params);
+        }
+
+        function addToCart(id, image, title, priceBefore, priceAfter) {
+            var userCart = getUserCartFromStorage();
+
+            if (!Object.keys(userCart).includes(id)) {
+                userCart[id] = {
+                    image,
+                    title,
+                    priceBefore,
+                    priceAfter,
+                };
+                localStorage.setItem("userCart", JSON.stringify(userCart));
+            }
+
+            sendCartToServer(id, "inc");
+            reloadPageIfInCart();
+        }
+
+        function removeFromCart(id) {
+            var userCart = getUserCartFromStorage();
+
+            if (Object.keys(userCart).includes(id)) {
+                delete userCart[id];
+                localStorage.setItem("userCart", JSON.stringify(userCart));
+            }
+
+            // remove from cart page
+            var elm = document.getElementById(`cart-item-${id}`);
+            if (elm) elm.remove();
+                
+            sendCartToServer(id, "dec");
+            reloadPageIfInCart();
+        }
+
+        function reloadPageIfInCart() {
+            if (window.location.pathname === "/cart") {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             } else {
-                wishable.setAttribute("fill-rule", "evenodd");
+                updateCart();
+                openCart();
             }
         }
-          
-    }
+
+        function manipulateWishList(id) {
+            var formData = createFormData({
+                _token: "{{csrf_token()}}",
+                product_id: id
+            });
+
+            var params = {
+                method: "POST",
+                route: "{{ route('client.wishList.add') }}",
+                formData,
+            };
+
+            sendRequest(params);
+
+            if (window.location.pathname === "/wishlist") {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                getWishListCount();
+                var wishable = document.getElementById(`product-wishable-${id}`);
+                var fill_rule = wishable.getAttribute("fill-rule");
+                if (fill_rule === "evenodd") {
+                    wishable.setAttribute("fill-rule", "nonezero");
+                } else {
+                    wishable.setAttribute("fill-rule", "evenodd");
+                }
+            }
+            
+        }
 
     </script>
   </body>
-
 </html>
