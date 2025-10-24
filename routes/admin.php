@@ -1,6 +1,13 @@
 <?php
 
-use App\Http\Controllers\Admin\{AboutController, CategoryController, ContactController, FAQController, ProductController, ProfileController, SettingController, UserController};
+use App\Http\Controllers\Admin\AboutController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
@@ -8,13 +15,15 @@ Route::prefix('admin')->group(function () {
         Route::view('/register', 'admin.auth.register')->name('register')->middleware('guest');
         Route::view('/login', 'admin.auth.login')->name('login')->middleware('guest');
         Route::view('/forget-password', 'admin.auth.forget-password')->name('forgetPassword')->middleware('guest');
-        
-        Route::middleware(['auth', 'admin'/*, 'verified', 'active'*/])->group(function() {
-            Route::get('/', function() { return redirect(route('admin.dashboard')); });
+
+        Route::middleware(['auth', 'admin'/* , 'verified', 'active' */])->group(function () {
+            Route::get('/', function () {
+                return redirect(route('admin.dashboard'));
+            });
             Route::view('/dashboard', 'admin.dashboard')->name('dashboard');
             Route::get('/profile', [ProfileController::class, 'profile'])->name('profile');
             Route::post('/profile/update', [ProfileController::class, 'updateProfile'])->name('updateProfile');
-            
+
             Route::prefix('users')->group(function () {
                 Route::name('users.')->group(function () {
                     Route::get('/', [UserController::class, 'index'])->name('index');
@@ -36,7 +45,7 @@ Route::prefix('admin')->group(function () {
             Route::post('faqs/toggleActive', [FAQController::class, 'toggleActive'])->name('faqs.toggleActive');
 
             Route::resource('settings', SettingController::class)->only(['index', 'store', 'update']);
-            
+
             Route::resource('messages', ContactController::class)->only(['index', 'show', 'destroy']);
             Route::post('messages/reply', [ContactController::class, 'reply'])->name('messages.reply');
         });
