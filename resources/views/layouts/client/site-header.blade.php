@@ -3,11 +3,12 @@
             <div class="container">
                 <div class="header-top-row">
                     <div class="logo-col">
-                        <h1>
+                        {{-- <h1>
                             <a href="/">
                                 <img src="/assets/client/images/logo.png" alt="">
                             </a>
-                        </h1>
+                        </h1> --}}
+                        <h3>Mikamades</h3>
                     </div>
                     <div class="header-top-right">
                         <div class="search-form-wrapper">
