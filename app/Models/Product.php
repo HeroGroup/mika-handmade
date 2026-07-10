@@ -15,7 +15,7 @@ class Product extends Model
         'description',
         'image_url',
         'price',
-        'quantity',
+        'base_quantity',
         'is_active',
         'is_featured',
         'is_new',
@@ -31,7 +31,7 @@ class Product extends Model
 
     protected $dates = ['deleted_at'];
 
-    public function getQuantityAttribute($value): int
+    public function getQuantityAttribute(): int
     {
         $variants = $this->relationLoaded('attributes')
             ? $this->getRelation('attributes')
@@ -41,7 +41,7 @@ class Product extends Model
             return (int) $variants->sum('quantity');
         }
 
-        return (int) $value;
+        return (int) $this->base_quantity;
     }
 
     public function categories(): HasMany

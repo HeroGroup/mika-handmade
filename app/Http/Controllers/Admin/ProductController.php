@@ -4,15 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Product\{StoreProductRequest, UpdateProductRequest};
-use App\Models\{Category, Product, ProductAttribute, ProductCategory, ProductImage, ProductPrice, ProductQuantity};
-use App\Models\Attribute;
+use App\Models\{Attribute, AttributeValue, Category, Product, ProductAttribute, ProductCategory, ProductImage, ProductPrice, ProductQuantity};
 use Helpers;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-
 class ProductController extends Controller
 {
     private $base_product_image_path = 'resources/assets/images/products/';
@@ -20,35 +17,34 @@ class ProductController extends Controller
     public function index(Request $request): RedirectResponse|View
     {
         try {
-            $products = DB::table('product_categories')
-                ->join('products', 'products.id', 'product_categories.product_id');
+            $productsQuery = Product::query();
             
             if ($request->query('category'))
             {
-                $products = $products->where('product_categories.category_id', $request->query('category'));
+                $productsQuery->whereHas('categories', function ($query) use ($request) {
+                    $query->where('category_id', $request->query('category'));
+                });
             }
 
             switch ($request->query('sort')) {
                 case 'oldest':
-                    $products = $products->orderBy('products.created_at', 'asc');
+                    $productsQuery->oldest('created_at');
                     break;
                 
                 default:
-                    $products = $products->orderByDesc('products.created_at');
+                    $productsQuery->latest('created_at');
                     break;
             }
 
-            $products = $products->paginate(30);
+            $products = $productsQuery->paginate(30);
 
             $categories = Category::where('is_active', 1)->get()->pluck('title','id')->toArray();
             
-            $size_values = Attribute::where('name', 'Size')->first()?->values ?? "";
-            $sizes = explode(',', $size_values);
-
-            $color_values = Attribute::where('name', 'Color')->first()?->values ?? "";
-            $colors = explode(',', $color_values);
+            $attributes = Attribute::with('values')->get();
+            $sizes = $attributes->firstWhere('name', \App\Enums\Attribute::Size->name)?->values ?? collect();
+            $colors = $attributes->firstWhere('name', \App\Enums\Attribute::Color->name)?->values ?? collect();
             
-            return view('admin.products', compact('products', 'categories', 'sizes', 'colors'));
+            return view('admin.products', compact('products', 'categories', 'attributes', 'sizes', 'colors'));
         } catch (\Exception $exception) {
             return back()->withErrors(['message' => $exception->getMessage()]);
         }
@@ -69,7 +65,7 @@ class ProductController extends Controller
                 'title' => trim(strip_tags($request->title)), // sanitize
                 'description' => trim(strip_tags($request->description)),  // sanitize
                 'price' => $request->price,
-                'quantity' => (int) $request->input('quantity', 0),
+                'base_quantity' => (int) $request->input('quantity', 0),
                 'image_url' => $image_url,
                 'is_new' => $request->is_new ? 1 : 0,
                 'is_featured' => $request->is_featured ? 1 : 0,
@@ -118,14 +114,13 @@ class ProductController extends Controller
             
             if ($request->has('variants')) {
                 $this->syncProductVariants($product, $request);
-            } elseif ($product->quantity != $request->quantity)
-            {
+            } elseif ($product->base_quantity != $request->quantity) {
                 ProductQuantity::create([
                     'product_id' => $product->id,
                     'quantity' => $request->quantity
                 ]);
 
-                // $product->quantity = $request->quantity;
+                $product->base_quantity = $request->quantity;
             }
 
             if ($request->hasFile('image')) {
@@ -163,9 +158,15 @@ class ProductController extends Controller
                 ]);
             }
 
-            if ($request->is_new) $product->is_new = 1;
-            if ($request->is_featured) $product->is_featured = 1;
-            if ($request->is_best_seller) $product->is_best_seller = 1;
+            if ($request->is_new) {
+                $product->is_new = 1;
+            }
+            if ($request->is_featured) {
+                $product->is_featured = 1;
+            }
+            if ($request->is_best_seller) {
+                $product->is_best_seller = 1;
+            }
 
             $product->save();
 
@@ -175,16 +176,12 @@ class ProductController extends Controller
         }
     }
 
-    public function updateAttributes(Request $request)
-    {
-        //
-    }
-
     public function destroy(Product $product): JsonResponse
     {
         try {
-            if ($product->image_url)
+            if ($product->image_url) {
                 Helpers::unlink(public_path().$product->image_url);
+            }
             
             // delete and unlink all product images, product prices, product categories
             ProductCategory::where('product_id', $product->id)->delete();
@@ -268,12 +265,20 @@ class ProductController extends Controller
                 'price' => $variant['price'] ?? $request->price,
             ];
 
-            if (! empty($variant['attribute_value_id'])) {
-                $variantData['attribute_values_id'] = $variant['attribute_value_id'];
-            }
+            $sizeValue = $variant['size'] ?? null;
+            $colorValue = $variant['color'] ?? null;
 
-            if (! empty($variant['attribute_values_id'])) {
-                $variantData['attribute_values_id'] = $variant['attribute_values_id'];
+            if ($sizeValue || $colorValue) {
+                $label = trim(implode(' / ', array_filter([
+                    $sizeValue ? \App\Enums\Attribute::Size->name.': ' . $sizeValue : null,
+                    $colorValue ? \App\Enums\Attribute::Color->name.': ' . $colorValue : null,
+                ])));
+                $variantAttribute = Attribute::firstOrCreate(['name' => 'Variant']);
+                $attributeValue = AttributeValue::firstOrCreate([
+                    'attribute_id' => $variantAttribute->id,
+                    'value' => $label ?: 'Default',
+                ]);
+                $variantData['attribute_value_id'] = $attributeValue->id;
             }
 
             $product->attributes()->create($variantData);

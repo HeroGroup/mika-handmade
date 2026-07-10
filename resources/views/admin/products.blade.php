@@ -88,113 +88,6 @@
                       </a>
                     </td>
                   </tr>
-                  <!-- Edit Product Modal -->
-                  <div class="modal fade" id="edit-product-{{$product->id}}-modal" tabindex="-1" role="dialog"
-                    aria-labelledby="newProductModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-lg" role="document">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h1 class="modal-title fs-5">Edit Product</h1>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                          <form method="post" action="{{ route('admin.products.update', $product->id) }}"
-                            enctype="multipart/form-data">
-                            @csrf
-                            @method('PUT')
-                            <div class="form-group row">
-                              <div class="col-md-6">
-                                <label for="title">Title</label>
-                                <input class="form-control" name="title" value="{{$product->title}}"
-                                  placeholder="Enter product title" required>
-                              </div>
-                              <div class="col-md-6">
-                                <label for="description">Description</label>
-                                <input class="form-control" name="description" value="{{$product->description}}"
-                                  placeholder="Enter product description">
-                              </div>
-                            </div>
-                            <?php  $product_categories = \App\Models\ProductCategory::where('product_id', $product->id)->pluck('category_id', 'id')->toArray(); ?>
-                            <div class="form-group row">
-                              <div class="col-md-6">
-                                <label for="price">Price</label>
-                                <input class="form-control" name="price" value="{{$product->price}}"
-                                  placeholder="Enter product price" required>
-                              </div>
-                              <div class="col-md-6">
-                                <label for="quantity">Quantity</label>
-                                <input class="form-control" name="quantity" value="{{$product->quantity}}"
-                                  placeholder="Enter product quantity" required>
-                              </div>
-                            </div>
-                            <div class="form-group row">
-                              <div class="col-md-6">
-                                <label for="categories">Categories</label>
-                                <select name="categories[]" id="categories[]" class="form-control" multiple>
-                                  @foreach ($categories as $key => $value)
-                                    <option value="{{$key}}" @if(in_array($key, $product_categories)) selected @endif>
-                                      {{$value}}
-                                    </option>
-                                  @endforeach
-                                </select>
-                              </div>
-                            </div>
-                            <div class="form-group row">
-                              <div class="col-md-6">
-                                <label>Change Main Image</label><br>
-                                <img src="{{ $product->image_url }}" height="50" />
-                                <input type="file" name="image" accept="image/*" />
-                              </div>
-                              <div class="col-md-6">
-                                <label>More Images</label>
-                                <input type="file" name="images[]" accept="image/*" multiple />
-                                <div class="row">
-                                  <?php  $product_images = \App\Models\ProductImage::where('product_id', $product->id)->get(); ?>
-                                  @foreach ($product_images as $image)
-                                    <div id="image_{{ $image->id }}" class="col-md-2">
-                                      <img src="{{ $image->image_url }}" height="50" /><br>
-                                      <a href="#" onclick="removeImage('{{ $image->id }}')">Remove</a>
-                                    </div>
-                                  @endforeach
-                                </div>
-                              </div>
-                            </div>
-                            <div class="form-group row">
-                              <div class="col-md-3">
-                                <label>New</label>
-                                <label class="switch">
-                                  <input type="checkbox" name="is_new" id="is_new" @if($product->is_new) checked @endif />
-                                  <span class="slider round"></span>
-                                </label>
-                              </div>
-                              <div class="col-md-3">
-                                <label>Featured</label>
-                                <label class="switch">
-                                  <input type="checkbox" name="is_featured" id="is_featured" @if($product->is_featured)
-                                  checked @endif />
-                                  <span class="slider round"></span>
-                                </label>
-                              </div>
-                              <div class="col-md-3">
-                                <label>Best Seller</label>
-                                <label class="switch">
-                                  <input type="checkbox" name="is_best_seller" id="is_best_seller"
-                                    @if($product->is_best_seller) checked @endif />
-                                  <span class="slider round"></span>
-                                </label>
-                              </div>
-                            </div>
-                            <div class="form-group row">
-                              <div class="col-md-12" style="text-align:center;">
-                                <input type="submit" class="btn btn-success" value="Save and close" />
-                              </div>
-                            </div>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <!-- End Edit Product Modal -->
                 @endforeach
               </tbody>
             </table>
@@ -203,6 +96,157 @@
       </div>
     </div>
   </div>
+
+  @foreach ($products as $product)
+    <!-- Edit Product Modal -->
+    <div class="modal fade" id="edit-product-{{$product->id}}-modal" tabindex="-1" role="dialog"
+      aria-labelledby="newProductModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5">Edit Product</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form method="post" action="{{ route('admin.products.update', $product->id) }}"
+              enctype="multipart/form-data">
+              @csrf
+              @method('PUT')
+              <div class="form-group row">
+                <div class="col-md-6">
+                  <label for="title">Title</label>
+                  <input class="form-control" name="title" value="{{$product->title}}"
+                    placeholder="Enter product title" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="description">Description</label>
+                  <input class="form-control" name="description" value="{{$product->description}}"
+                    placeholder="Enter product description">
+                </div>
+              </div>
+              <?php  $product_categories = \App\Models\ProductCategory::where('product_id', $product->id)->pluck('category_id', 'id')->toArray(); ?>
+              <div class="form-group row">
+                <div class="col-md-6">
+                  <label for="price">Price</label>
+                  <input class="form-control" name="price" value="{{$product->price}}"
+                    placeholder="Enter product price" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="quantity">Quantity</label>
+                  <input class="form-control" name="quantity" value="{{$product->quantity}}"
+                    placeholder="Enter product quantity" required>
+                </div>
+              </div>
+              <div class="form-group row">
+                <div class="col-md-6">
+                  <label for="categories">Categories</label>
+                  <select name="categories[]" id="categories[]" class="form-control" multiple>
+                    @foreach ($categories as $key => $value)
+                      <option value="{{$key}}" @if(in_array($key, $product_categories)) selected @endif>
+                        {{$value}}
+                      </option>
+                    @endforeach
+                  </select>
+                </div>
+              </div>
+              <hr />
+              <div class="form-group row">
+                <div class="col-md-12">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h3>Variants</h3>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addVariantRow('edit-variant-rows-{{$product->id}}')">Add variant</button>
+                  </div>
+                  <div id="edit-variant-rows-{{$product->id}}"></div>
+                </div>
+              </div>
+              <hr />
+              <div class="form-group row">
+                <div class="col-md-6">
+                  <label>Change Main Image</label><br>
+                  <img src="{{ $product->image_url }}" height="50" />
+                  <input type="file" name="image" accept="image/*" />
+                </div>
+                <div class="col-md-6">
+                  <label>More Images</label>
+                  <input type="file" name="images[]" accept="image/*" multiple />
+                  <div class="row">
+                    <?php  $product_images = \App\Models\ProductImage::where('product_id', $product->id)->get(); ?>
+                    @foreach ($product_images as $image)
+                      <div id="image_{{ $image->id }}" class="col-md-2">
+                        <img src="{{ $image->image_url }}" height="50" /><br>
+                        <a href="#" onclick="removeImage('{{ $image->id }}')">Remove</a>
+                      </div>
+                    @endforeach
+                  </div>
+                </div>
+              </div>
+              <div class="form-group row">
+                <div class="col-md-3">
+                  <label>New</label>
+                  <label class="switch">
+                    <input type="checkbox" name="is_new" id="is_new" @if($product->is_new) checked @endif />
+                    <span class="slider round"></span>
+                  </label>
+                </div>
+                <div class="col-md-3">
+                  <label>Featured</label>
+                  <label class="switch">
+                    <input type="checkbox" name="is_featured" id="is_featured" @if($product->is_featured)
+                    checked @endif />
+                    <span class="slider round"></span>
+                  </label>
+                </div>
+                <div class="col-md-3">
+                  <label>Best Seller</label>
+                  <label class="switch">
+                    <input type="checkbox" name="is_best_seller" id="is_best_seller"
+                      @if($product->is_best_seller) checked @endif />
+                    <span class="slider round"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group row">
+                <div class="col-md-12" style="text-align:center;">
+                  <input type="submit" class="btn btn-success" value="Save and close" />
+                </div>
+              </div>
+              @php
+                $existingVariants = $product->attributes()->get()->map(function ($variant) {
+                    $size = '';
+                    $color = '';
+                    $attributeValue = $variant->attributeValue;
+                    if ($attributeValue) {
+                        $value = $attributeValue->value;
+                        if (str_contains($value, app\Enums\Attribute::Size->value.':')) {
+                            preg_match('/Size:\s*(.+)/', $value, $sizeMatches);
+                            $size = $sizeMatches[1] ?? '';
+                        }
+                        if (str_contains($value, app\Enums\Attribute::Color->value.':')) {
+                            preg_match('/Color:\s*(.+)/', $value, $colorMatches);
+                            $color = $colorMatches[1] ?? '';
+                        }
+                    }
+
+                    return [
+                        'size' => $size,
+                        'color' => $color,
+                        'quantity' => (int) $variant->quantity,
+                        'price' => (float) $variant->price,
+                    ];
+                })->values()->toJson();
+              @endphp
+              <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    renderVariantRows('edit-variant-rows-{{$product->id}}', {!! $existingVariants !!});
+                });
+              </script>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Edit Product Modal -->
+  @endforeach
 
   {{ $products->links() }}
 
@@ -256,26 +300,36 @@
                 <input type="file" name="image" accept="image/*" />
               </div>
             </div>
+            <hr />
+            <div class="form-group row">
+              <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h3>Variants</h3>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addVariantRow('variant-rows')">Add variant</button>
+                </div>
+                <div id="variant-rows"></div>
+              </div>
+            </div>
+            <hr />
             <div class="form-group row">
               <div class="col-md-3">
                 <label>New</label>
                 <label class="switch">
-                  <input type="checkbox" name="is_new" id="is_new" @if($product->is_new) checked @endif />
+                  <input type="checkbox" name="is_new" id="is_new" />
                   <span class="slider round"></span>
                 </label>
               </div>
               <div class="col-md-3">
                 <label>Featured</label>
                 <label class="switch">
-                  <input type="checkbox" name="is_featured" id="is_featured" @if($product->is_featured) checked @endif />
+                  <input type="checkbox" name="is_featured" id="is_featured" />
                   <span class="slider round"></span>
                 </label>
               </div>
               <div class="col-md-3">
                 <label>Best Seller</label>
                 <label class="switch">
-                  <input type="checkbox" name="is_best_seller" id="is_best_seller" @if($product->is_best_seller) checked
-                  @endif />
+                  <input type="checkbox" name="is_best_seller" id="is_best_seller"  />
                   <span class="slider round"></span>
                 </label>
               </div>
@@ -327,5 +381,78 @@
 
       sendRequest(params);
     }
+
+    function addVariantRow(containerId, sizeValue, colorValue, quantityValue, priceValue) {
+      var container = document.getElementById(containerId);
+      if (!container) {
+        return;
+      }
+
+      var index = container.children.length;
+      var row = document.createElement('div');
+      row.className = 'row mb-2 variant-row';
+      row.innerHTML = `
+        <div class="col-md-3">
+          <label>Size</label>
+          <select name="variants[${index}][size]" class="form-control">
+            <option value="">Select size</option>
+            @foreach ($sizes as $size)
+              <option value="{{ $size->value }}">{{ $size->value }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label>Color</label>
+          <select name="variants[${index}][color]" class="form-control">
+            <option value="">Select color</option>
+            @foreach ($colors as $color)
+              <option value="{{ $color->value }}">{{ $color->value }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label>Qty</label>
+          <input type="number" name="variants[${index}][quantity]" class="form-control" min="0" value="${quantityValue || 0}" />
+        </div>
+        <div class="col-md-2">
+          <label>Price</label>
+          <input type="number" step="0.01" name="variants[${index}][price]" class="form-control" value="${priceValue || '{{ old('price') ?? 0 }}'}" />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.variant-row').remove()">Remove</button>
+        </div>
+      `;
+      container.appendChild(row);
+
+      var sizeSelect = row.querySelector('select[name$="[size]"]');
+      var colorSelect = row.querySelector('select[name$="[color]"]');
+      if (sizeSelect && sizeValue) {
+        sizeSelect.value = sizeValue;
+      }
+      if (colorSelect && colorValue) {
+        colorSelect.value = colorValue;
+      }
+    }
+
+    function renderVariantRows(containerId, variants) {
+      var container = document.getElementById(containerId);
+      if (!container) {
+        return;
+      }
+
+      container.innerHTML = '';
+      if (!variants || !variants.length) {
+        addVariantRow(containerId);
+        return;
+      }
+
+      variants.forEach(function (variant) {
+        addVariantRow(containerId, variant.size || '', variant.color || '', variant.quantity || 0, variant.price || 0);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      addVariantRow('variant-rows');
+    });
   </script>
 @endsection

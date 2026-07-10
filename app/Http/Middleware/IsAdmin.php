@@ -16,7 +16,7 @@ class IsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user()?->user_type != UserType::ADMIN)
+        if ($request->user()?->user_type != UserType::Admin)
         {
             return redirect(route('admin.login'));
         }

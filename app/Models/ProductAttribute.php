@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,7 +11,6 @@ class ProductAttribute extends Model
 {
     protected $fillable = [
         'product_id',
-        'attribute_values_id',
         'attribute_value_id',
         'quantity',
         'price',
@@ -28,7 +28,7 @@ class ProductAttribute extends Model
 
     public function attributeValue(): BelongsTo
     {
-        return $this->belongsTo(AttributeValue::class, 'attribute_values_id');
+        return $this->belongsTo(AttributeValue::class, 'attribute_value_id');
     }
 
     public function stockMovements(): HasMany
@@ -46,8 +46,7 @@ class ProductAttribute extends Model
             throw new \RuntimeException('Insufficient stock available.');
         }
 
-        $this->quantity -= $amount;
-        $this->save();
+        $this->decrement('quantity', $amount);
 
         return $this->stockMovements()->create([
             'product_id' => $this->product_id,
