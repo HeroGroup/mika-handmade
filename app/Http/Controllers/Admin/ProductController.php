@@ -4,7 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Product\{StoreProductRequest, UpdateProductRequest};
-use App\Models\{Category, Product, ProductCategory, ProductImage, ProductPriceHistory};
+use App\Models\{Category, Product, ProductAttribute, ProductCategory, ProductImage, ProductPrice, ProductQuantity};
+use App\Models\Attribute;
+use Helpers;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -12,7 +17,7 @@ class ProductController extends Controller
 {
     private $base_product_image_path = 'resources/assets/images/products/';
 
-    public function index(Request $request)
+    public function index(Request $request): RedirectResponse|View
     {
         try {
             $products = DB::table('product_categories')
@@ -35,15 +40,21 @@ class ProductController extends Controller
 
             $products = $products->paginate(30);
 
-            
             $categories = Category::where('is_active', 1)->get()->pluck('title','id')->toArray();
-            return view('admin.products', compact('products', 'categories'));
+            
+            $size_values = Attribute::where('name', 'Size')->first()?->values ?? "";
+            $sizes = explode(',', $size_values);
+
+            $color_values = Attribute::where('name', 'Color')->first()?->values ?? "";
+            $colors = explode(',', $color_values);
+            
+            return view('admin.products', compact('products', 'categories', 'sizes', 'colors'));
         } catch (\Exception $exception) {
             return back()->withErrors(['message' => $exception->getMessage()]);
         }
     }
 
-    public function store(StoreProductRequest $request)
+    public function store(StoreProductRequest $request): RedirectResponse
     {
         try {
             $image_url = "";
@@ -51,26 +62,28 @@ class ProductController extends Controller
                 $document = $request->image;
                 $file_name = time() . '-' . $document->getClientOriginalName();
                 $document->move($this->base_product_image_path, $file_name);
-                $image_url = "/" . $this->base_product_image_path . $file_name;
+                $image_url = "/{$this->base_product_image_path}{$file_name}";
             }
 
             $product = Product::create([
                 'title' => trim(strip_tags($request->title)), // sanitize
                 'description' => trim(strip_tags($request->description)),  // sanitize
                 'price' => $request->price,
-                'quantity' => $request->quantity,
+                'quantity' => (int) $request->input('quantity', 0),
                 'image_url' => $image_url,
+                'is_new' => $request->is_new ? 1 : 0,
+                'is_featured' => $request->is_featured ? 1 : 0,
+                'is_best_seller' => $request->is_best_seller ? 1 : 0,
             ]);
             
-            ProductPriceHistory::create([
-                'product_id' => $product->id,
-                'price' => $request->price
-            ]);
-            
-            ProductQuantity::create([
-                'product_id' => $product->id,
-                'quantity' => $request->quantity
-            ]);
+            if ($request->price > 0) {
+                ProductPrice::create([
+                    'product_id' => $product->id,
+                    'price' => $request->price
+                ]);
+            }
+
+            $this->createProductVariants($product, $request);
 
             $categories = $request->categories;
             foreach ($categories as $category)
@@ -87,7 +100,7 @@ class ProductController extends Controller
         }
     }
 
-    public function update(UpdateProductRequest $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
         try {
             $product->title = $request->title;
@@ -95,7 +108,7 @@ class ProductController extends Controller
             
             if ($product->price != $request->price)
             {
-                ProductPriceHistory::create([
+                ProductPrice::create([
                     'product_id' => $product->id,
                     'price' => $request->price
                 ]);
@@ -103,24 +116,26 @@ class ProductController extends Controller
                 $product->price = $request->price;
             }
             
-            if ($product->quantity != $request->quantity)
+            if ($request->has('variants')) {
+                $this->syncProductVariants($product, $request);
+            } elseif ($product->quantity != $request->quantity)
             {
                 ProductQuantity::create([
                     'product_id' => $product->id,
                     'quantity' => $request->quantity
                 ]);
 
-                $product->quantity = $request->quantity;
+                // $product->quantity = $request->quantity;
             }
 
             if ($request->hasFile('image')) {
                 if ($product->image_url)
-                    unlink(public_path().$product->image_url);
+                    Helpers::unlink(public_path().$product->image_url);
 
                 $document = $request->image;
                 $file_name = time() . '-' . $document->getClientOriginalName();
                 $document->move($this->base_product_image_path, $file_name);
-                $product->image_url = "/" . $this->base_product_image_path . $file_name;
+                $product->image_url = "/{$this->base_product_image_path}$file_name";
             }
 
             if ($request->hasFile('images'))
@@ -130,7 +145,7 @@ class ProductController extends Controller
                 {
                     $file_name = time() . '-' . $image->getClientOriginalName();
                     $image->move($this->base_product_image_path, $file_name);
-                    $image_url = "/" . $this->base_product_image_path . $file_name;
+                    $image_url = "/{$this->base_product_image_path}$file_name";
                     ProductImage::create([
                         'product_id' => $product->id,
                         'image_url' => $image_url
@@ -148,6 +163,10 @@ class ProductController extends Controller
                 ]);
             }
 
+            if ($request->is_new) $product->is_new = 1;
+            if ($request->is_featured) $product->is_featured = 1;
+            if ($request->is_best_seller) $product->is_best_seller = 1;
+
             $product->save();
 
             return back()->with('success', 'Product was updated successfully.');
@@ -156,22 +175,27 @@ class ProductController extends Controller
         }
     }
 
-    public function destroy(Product $product)
+    public function updateAttributes(Request $request)
+    {
+        //
+    }
+
+    public function destroy(Product $product): JsonResponse
     {
         try {
             if ($product->image_url)
-                unlink(public_path().$product->image_url);
+                Helpers::unlink(public_path().$product->image_url);
             
             // delete and unlink all product images, product prices, product categories
             ProductCategory::where('product_id', $product->id)->delete();
             
             $product_images = ProductImage::where('product_id', $product->id)->get();
-            foreach ($product_images as $product_image) {
-                unlink(public_path().$product_image->image_url);
-            }
+            foreach ($product_images as $product_image)
+                Helpers::unlink(public_path().$product_image->image_url);
+
             ProductImage::where('product_id', $product->id)->delete();
             
-            ProductPriceHistory::where('product_id', $product->id)->delete();
+            ProductPrice::where('product_id', $product->id)->delete();
             
             ProductQuantity::where('product_id', $product->id)->delete();
             
@@ -183,7 +207,7 @@ class ProductController extends Controller
         }
     }
 
-    public function toggleActive(Request $request)
+    public function toggleActive(Request $request): JsonResponse
     {
         try {
             $product = Product::find($request->id);
@@ -197,13 +221,13 @@ class ProductController extends Controller
 
             $status = $product->is_active ? 'activated' : 'deactivated';
 
-            return $this->success('product ' . $status . '!');
+            return $this->success('product $status!');
         } catch (\Exception $ex) {
             return $this->fail($ex->getMessage());
         }
     }
 
-    public function removeImage(Request $request)
+    public function removeImage(Request $request): JsonResponse
     {
         try {
             $image = ProductImage::find($request->id);
@@ -213,11 +237,53 @@ class ProductController extends Controller
             }
 
             $image->delete();
-            unlink(public_path().$image->image_url);
+            Helpers::unlink(public_path().$image->image_url);
 
             return $this->success("removed successfully!");
         } catch (\Exception $ex) {
             return $this->fail($ex->getMessage());
         }
+    }
+
+    private function createProductVariants(Product $product, Request $request): void
+    {
+        $variants = $request->input('variants', []);
+
+        if (! is_array($variants) || empty($variants)) {
+            $quantity = (int) $request->input('quantity', 0);
+            if ($quantity > 0) {
+                $product->attributes()->create([
+                    'quantity' => $quantity,
+                    'price' => $request->price,
+                ]);
+            }
+
+            return;
+        }
+
+        foreach ($variants as $variant) {
+            $variantData = [
+                'product_id' => $product->id,
+                'quantity' => (int) ($variant['quantity'] ?? 0),
+                'price' => $variant['price'] ?? $request->price,
+            ];
+
+            if (! empty($variant['attribute_value_id'])) {
+                $variantData['attribute_values_id'] = $variant['attribute_value_id'];
+            }
+
+            if (! empty($variant['attribute_values_id'])) {
+                $variantData['attribute_values_id'] = $variant['attribute_values_id'];
+            }
+
+            $product->attributes()->create($variantData);
+        }
+    }
+
+    private function syncProductVariants(Product $product, Request $request): void
+    {
+        $product->attributes()->delete();
+        $product->quantities()->delete();
+        $this->createProductVariants($product, $request);
     }
 }

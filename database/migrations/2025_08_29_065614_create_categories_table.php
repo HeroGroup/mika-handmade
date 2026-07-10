@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('description')->nullable();
             $table->string('image_url')->nullable();
             $table->boolean('is_active')->default(1);
+            $table->foreignId('category_id')->nullable()->constrained();
             $table->timestamps();
             $table->softDeletes($column = 'deleted_at', $precision = 0);
         });

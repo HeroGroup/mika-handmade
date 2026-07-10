@@ -13,8 +13,12 @@ return new class extends Migration
     {
         Schema::create('product_quantities', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->references('id')->on('products');
-            $table->string('quantity', 10);
+            $table->foreignId('product_id')->nullable()->constrained();
+            $table->foreignId('product_attribute_id')->nullable()->constrained();
+            $table->integer('quantity')->default(0);
+            $table->integer('quantity_change')->default(0);
+            $table->integer('remaining_quantity')->default(0);
+            $table->string('reason')->nullable();
             $table->timestamps();
         });
     }

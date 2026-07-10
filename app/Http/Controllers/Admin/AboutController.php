@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\About\{StoreAboutRequest, UpdateAboutRequest};
 use App\Models\About;
+use Helpers;
 use Illuminate\Http\Request;
 
 class AboutController extends Controller
@@ -25,9 +26,9 @@ class AboutController extends Controller
             $image_url = "";
             if ($request->hasFile('image')) {
                 $document = $request->image;
-                $file_name = time() . '-' . $document->getClientOriginalName();
+                $file_name = time().'-'.$document->getClientOriginalName();
                 $document->move("resources/assets/images/abouts/", $file_name);
-                $image_url = "/resources/assets/images/abouts/" . $file_name;
+                $image_url = "/resources/assets/images/abouts/$file_name";
             }
 
             About::create([
@@ -49,13 +50,12 @@ class AboutController extends Controller
             $about->description = $request->description;
 
             if ($request->hasFile('image')) {
-                if ($about->image_url)
-                    unlink(public_path().$about->image_url);
+                Helpers::unlink(public_path().$about->image_url);
 
                 $document = $request->image;
-                $file_name = time() . '-' . $document->getClientOriginalName();
+                $file_name = time().'-'.$document->getClientOriginalName();
                 $document->move("resources/assets/images/abouts/", $file_name);
-                $about->image_url = "/resources/assets/images/abouts/" . $file_name;
+                $about->image_url = "/resources/assets/images/abouts/$file_name";
             }
 
             $about->save();
@@ -66,11 +66,11 @@ class AboutController extends Controller
         }
     }
 
-    public function destroy(about $about)
+    public function destroy(About $about)
     {
         try {
             if ($about->image_url)
-                unlink(public_path().$about->image_url);
+                Helpers::unlink(public_path().$about->image_url);
             
             $about->delete();
             return $this->success('Removed successfully.');
@@ -91,7 +91,7 @@ class AboutController extends Controller
 
             $status = $about->is_active ? 'activated' : 'deactivated';
 
-            return $this->success('about ' . $status . '!');
+            return $this->success('about $status!');
         } catch (\Throwable $th) {
             return $this->fail($th->getMessage());
         }

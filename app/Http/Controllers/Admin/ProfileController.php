@@ -19,7 +19,7 @@ class ProfileController extends Controller
 
             return view('admin.profile', compact('user'));
 
-        } catch (\Exeption $exception) {
+        } catch (\Exception $exception) {
             return back()->withErrors(['message' => $exception->getMessage()]);
         }
     }
@@ -50,7 +50,7 @@ class ProfileController extends Controller
 
             return back()->with('success', 'Profile updated successfully.');
 
-        } catch (\Exeption $exception) {
+        } catch (\Exception $exception) {
             return back()->withErrors(['message' => $exception->getMessage()])->withInput();
         }
     }

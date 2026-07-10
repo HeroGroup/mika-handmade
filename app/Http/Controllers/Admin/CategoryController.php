@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Category\{StoreCategoryRequest, UpdateCategoryRequest};
 use App\Models\{Category, ProductCategory};
+use Helpers;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -26,9 +27,9 @@ class CategoryController extends Controller
             $image_url = "";
             if ($request->hasFile('image')) {
                 $document = $request->image;
-                $file_name = time() . '-' . $document->getClientOriginalName();
+                $file_name = time().'-'.$document->getClientOriginalName();
                 $document->move("resources/assets/images/categories/", $file_name);
-                $image_url = "/resources/assets/images/categories/" . $file_name;
+                $image_url = "/resources/assets/images/categories/$file_name";
             }
 
             Category::create([
@@ -52,13 +53,12 @@ class CategoryController extends Controller
             $category->category_id = $request->category_id;
 
             if ($request->hasFile('image')) {
-                if ($category->image_url)
-                    unlink(public_path().$category->image_url);
+                Helpers::unlink(public_path().$category->image_url);
 
                 $document = $request->image;
-                $file_name = time() . '-' . $document->getClientOriginalName();
+                $file_name = time().'-'.$document->getClientOriginalName();
                 $document->move("resources/assets/images/categories/", $file_name);
-                $category->image_url = "/resources/assets/images/categories/" . $file_name;
+                $category->image_url = "/resources/assets/images/categories/$file_name";
             }
 
             $category->save();
@@ -75,7 +75,7 @@ class CategoryController extends Controller
             ProductCategory::where('category_id', $category->id)->delete();
             
             if ($category->image_url)
-                unlink(public_path().$category->image_url);
+                Helpers::unlink(public_path().$category->image_url);
             
             $category->delete();
             return $this->success('Removed successfully.');
@@ -98,7 +98,7 @@ class CategoryController extends Controller
 
             $status = $category->is_active ? 'activated' : 'deactivated';
 
-            return $this->success('category ' . $status . '!');
+            return $this->success('category $status!');
         } catch (\Throwable $th) {
             return $this->fail($th->getMessage());
         }

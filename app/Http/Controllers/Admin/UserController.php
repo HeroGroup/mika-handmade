@@ -23,8 +23,8 @@ class UserController extends Controller
 
             $status = $user->is_active ? 'activated' : 'deactivated';
 
-            return $this->success('User ' . $status . '!');
-        } catch (\Exeption $exception) {
+            return $this->success('User $status!');
+        } catch (\Exception $exception) {
             return $this->fail($exception->getMessage());
         }
     }

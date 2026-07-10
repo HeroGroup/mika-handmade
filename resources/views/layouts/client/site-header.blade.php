@@ -5,7 +5,7 @@
                     <div class="logo-col">
                         {{-- <h1>
                             <a href="/">
-                                <img src="/assets/client/images/logo.png" alt="">
+                                <img src="/assets/client/images/logo.png" alt="Mikamades">
                             </a>
                         </h1> --}}
                         <h3>Mikamades</h3>

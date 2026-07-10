@@ -16,8 +16,12 @@ return new class extends Migration
             $table->string('title', 70);
             $table->string('description')->nullable();
             $table->string('image_url')->nullable();
-            $table->string('price', 10);
+            $table->string('price', 10)->nullable();
+            $table->string('quantity', 10)->nullable();
             $table->boolean('is_active')->default(1);
+            $table->boolean('is_featured')->default(0);
+            $table->boolean('is_New')->default(0);
+            $table->boolean('is_best_seller')->default(0);
             $table->timestamps();
             $table->softDeletes($column = 'deleted_at', $precision = 0);
         });

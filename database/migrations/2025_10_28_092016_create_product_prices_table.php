@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('product_price_histories', function (Blueprint $table) {
+        Schema::create('product_prices', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->references('id')->on('products');
+            $table->foreignId('product_id')->nullable()->constrained();
+            $table->foreignId('product_attribute_id')->nullable()->constrained();
             $table->string('price', 10);
             $table->timestamps();
         });

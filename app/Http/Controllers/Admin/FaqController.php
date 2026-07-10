@@ -69,7 +69,7 @@ class FaqController extends Controller
 
             $status = $faq->is_active ? 'activated' : 'deactivated';
 
-            return $this->success('faq ' . $status . '!');
+            return $this->success('faq $status!');
         } catch (\Throwable $th) {
             return $this->fail($th->getMessage());
         }

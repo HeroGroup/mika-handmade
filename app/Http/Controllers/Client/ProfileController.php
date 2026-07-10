@@ -79,7 +79,7 @@ class ProfileController extends Controller
             } else {
                 return $this->fail('invalid user');
             }
-        } catch (\Exeption $exception) {
+        } catch (\Exception $exception) {
             return $this->fail($exception->getMessage());
         }
     }
@@ -107,7 +107,7 @@ class ProfileController extends Controller
             } else {
                 return $this->fail('invalid user');
             }
-        } catch (\Exeption $exception) {
+        } catch (\Exception $exception) {
             return $this->fail($exception->getMessage());
         }
     }
