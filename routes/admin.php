@@ -27,6 +27,8 @@ Route::prefix('admin')->group(function () {
             Route::prefix('users')->group(function () {
                 Route::name('users.')->group(function () {
                     Route::get('/', [UserController::class, 'index'])->name('index');
+                    Route::post('/', [UserController::class, 'store'])->name('store');
+                    Route::put('/{user}', [UserController::class, 'update'])->name('update');
                     Route::post('/toggleActive', [UserController::class, 'toggleActive'])->name('toggleActive');
                 });
             });
