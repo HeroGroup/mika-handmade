@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserAddress;
 use App\Models\WishList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -12,7 +13,10 @@ class ProfileController extends Controller
 {
     public function show()
     {
-        return view('client.my-account');
+        $user = auth()->user();
+        $address = $user?->loadMissing('address')->address;
+
+        return view('client.my-account', compact('address'));
     }
 
     public function updateGeneralInfo(Request $request)
@@ -52,6 +56,50 @@ class ProfileController extends Controller
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');
+    }
+
+    public function saveAddress(Request $request)
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return back()->withErrors(['message' => 'User not found!']);
+        }
+
+        $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'address_1' => ['required', 'string', 'max:255'],
+            'city' => ['required', 'string', 'max:255'],
+            'post_code' => ['required', 'string', 'max:50'],
+            'country' => ['required', 'string', 'max:255'],
+            'state' => ['required', 'string', 'max:255'],
+        ]);
+
+        $addressData = $request->only([
+            'first_name',
+            'last_name',
+            'company',
+            'address_1',
+            'address_2',
+            'city',
+            'post_code',
+            'country',
+            'state',
+        ]);
+
+        $addressData['default_address'] = (bool) $request->boolean('default_address');
+
+        $address = $user->address()->first();
+
+        if ($address) {
+            $address->update($addressData);
+        } else {
+            $addressData['user_id'] = $user->id;
+            $address = UserAddress::create($addressData);
+        }
+
+        return back()->with('success', 'Address saved successfully.');
     }
 
     public function addToWishList(Request $request)

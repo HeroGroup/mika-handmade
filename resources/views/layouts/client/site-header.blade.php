@@ -8,7 +8,7 @@
                                 <img src="/assets/client/images/logo.png" alt="Mikamades">
                             </a>
                         </h1> --}}
-                        <h3>Mikamades</h3>
+                        <a href="/"><h3>Mikamades</h3></a>
                     </div>
                     <div class="header-top-right">
                         <div class="search-form-wrapper">

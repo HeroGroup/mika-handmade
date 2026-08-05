@@ -4,6 +4,7 @@
   <h6 class="font-weight-light">Sign in to continue.</h6>
   <form class="pt-3" method="POST" action="{{ route('login') }}">
     @csrf
+    <input type="hidden" name="portal" value="admin">
     <div class="form-group">
       <input name="email" type="email" class="form-control form-control-lg" id="exampleInputEmail1" placeholder="Email">
     </div>

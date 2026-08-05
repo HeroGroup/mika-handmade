@@ -18,7 +18,7 @@ class IsAdmin
     {
         if ($request->user()?->user_type != UserType::Admin)
         {
-            return redirect(route('admin.login'));
+            abort(403);
         }
 
         return $next($request);

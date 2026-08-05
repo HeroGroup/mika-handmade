@@ -1,4 +1,4 @@
-@extends('layouts.client.app')
+@extends('layouts.client.site', ['page_title' => 'Register'])
 @section('content')
     <!--wrapper start here-->
     <div class="wrapper">
@@ -20,7 +20,8 @@
                             <h2>Register</h2> 
                         </div> 
                         <div class="form-wrapper register-form">
-                            <form>
+                            <form method="POST" action="{{ url('/register') }}">
+                                @csrf
                                 <div class="form-container">
                                     <div class="form-heading">
                                         <h4>Your <b>Personal Details</b></h4>
@@ -31,7 +32,7 @@
                                         <div class="col-md-6 col-12">
                                             <div class="form-group">
                                                 <label>First Name<sup aria-hidden="true">*</sup>:</label>
-                                                <input type="text" class="form-control" placeholder="John" required="">
+                                                <input name="name" type="text" class="form-control" placeholder="John" required="">
                                             </div>
                                         </div>
                                         <div class="col-md-6 col-12">
@@ -43,13 +44,13 @@
                                         <div class="col-md-6 col-12">
                                             <div class="form-group">
                                                 <label>E-mail<sup aria-hidden="true">*</sup>:</label>
-                                                <input type="email" class="form-control" placeholder="shop@company.com" required="">
+                                                <input name="email" type="email" class="form-control" placeholder="shop@company.com" required="">
                                             </div>
                                         </div>
                                         <div class="col-md-6 col-12">
                                             <div class="form-group">
                                                 <label>Telephone<sup aria-hidden="true">*</sup>:</label>
-                                                <input type="number" class="form-control" placeholder="1234567890" required="">
+                                                <input name="phone" type="number" class="form-control" placeholder="1234567890" required="">
                                             </div>
                                         </div> 
                                     </div> 
@@ -60,13 +61,13 @@
                                         <div class="col-md-6 col-12">
                                             <div class="form-group">
                                                 <label>Password<sup aria-hidden="true">*</sup>:</label>
-                                                <input type="text" class="form-control" placeholder="**********" required="">
+                                                <input name="password" type="password" class="form-control" placeholder="**********" required="">
                                             </div>
                                         </div>
                                         <div class="col-md-6 col-12">
                                             <div class="form-group">
                                                 <label>Confirm password<sup aria-hidden="true">*</sup>:</label>
-                                                <input type="text" class="form-control" placeholder="***********" required="">
+                                                <input name="password_confirmation" type="password" class="form-control" placeholder="***********" required="">
                                             </div>
                                         </div> 
                                     </div> 
@@ -104,7 +105,7 @@
                                         </div>
                                         <div class="col-lg-4 col-12"> 
                                             <button class="btn submit-btn" type="submit">
-                                                Send message 
+                                                Register
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="35" height="14" viewBox="0 0 35 14" fill="none">
                                                     <path d="M25.0749 14L35 7L25.0805 0L29.12 6.06667H0V7.93333H29.12L25.0749 14Z"></path>
                                                 </svg>

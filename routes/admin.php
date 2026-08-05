@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('admin')->group(function () {
     Route::name('admin.')->group(function () {
         Route::view('/register', 'admin.auth.register')->name('register')->middleware('guest');
-        Route::view('/login', 'admin.auth.login')->name('login')->middleware('guest');
+        Route::view('/login', 'admin.auth.login')->name('admin.login')->middleware('guest');
         Route::view('/forget-password', 'admin.auth.forget-password')->name('forgetPassword')->middleware('guest');
 
         Route::middleware(['auth', 'admin'/* , 'verified', 'active' */])->group(function () {

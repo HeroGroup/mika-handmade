@@ -7,15 +7,21 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [SiteController::class, 'index']);
 
+Route::view('/login', 'client.login')->name('client.login')->middleware('guest');
+Route::view('/register', 'client.register')->name('client.register')->middleware('guest');
+
 Route::get('/product/{id}', [SiteController::class, 'product'])->name('client.product');
 
 Route::get('/product-list/{id}', [SiteController::class, 'productList'])->name('client.productList');
 
-Route::prefix('profile')->group(function () {
+Route::prefix('profile')
+    ->middleware('auth')
+    ->group(function () {
     Route::name('client.profile')->group(function () {
         Route::get('/', [ProfileController::class, 'show']);
         Route::post('/update', [ProfileController::class, 'updateGeneralInfo'])->name('.update');
         Route::post('/updatePassword', [ProfileController::class, 'updatePassword'])->name('.updatePassword');
+        Route::post('/address', [ProfileController::class, 'saveAddress'])->name('.address');
     });
 });
 

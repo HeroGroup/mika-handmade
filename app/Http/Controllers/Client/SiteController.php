@@ -9,16 +9,18 @@ use App\Models\Category;
 use App\Models\Contact;
 use App\Models\FAQ;
 use App\Models\Product;
+use App\Models\ProductAttribute;
 use App\Models\ProductCategory;
-use App\Models\ProductImage;
 use App\Models\Setting;
 use App\Models\UserCart;
 use Illuminate\Http\Request;
 
-// use Illuminate\Http\Request;
-
 class SiteController extends Controller
 {
+    // public function login()
+    // {
+    //     //
+    // }
     public function index()
     {
         try {
@@ -33,16 +35,49 @@ class SiteController extends Controller
     public function product($id)
     {
         try {
-            $product = Product::find($id);
+            $product = Product::with(['images', 'categories.category', 'attributes.attributeValue.attribute'])->find($id);
             if (! $product || ! $product->is_active) {
                 abort(404);
             }
 
-            $product_images = ProductImage::where('product_id', $product->id)->get();
-
+            $product_images = $product->images;
             $category_id = ProductCategory::where('product_id', $id)->first()?->category_id;
 
-            return view('client.product', compact('product', 'product_images', 'category_id'));
+            $variantOptions = [];
+            $variantGroups = [];
+
+            foreach ($product->attributes as $attribute) {
+                $variantOptions[] = $this->buildVariantOption($attribute);
+            }
+
+            if (empty($variantOptions)) {
+                $variantOptions[] = [
+                    'id' => null,
+                    'price' => (float) $product->price,
+                    'quantity' => (int) $product->quantity,
+                    'in_stock' => (int) $product->quantity > 0,
+                    'attributes' => [],
+                    'label' => 'Default',
+                ];
+            }
+
+            foreach ($variantOptions as $variantOption) {
+                foreach ($variantOption['attributes'] as $attributeName => $attributeValue) {
+                    if (blank($attributeValue)) {
+                        continue;
+                    }
+
+                    $variantGroups[$attributeName]['name'] = $attributeName;
+                    $variantGroups[$attributeName]['label'] = ucfirst($attributeName);
+                    $variantGroups[$attributeName]['options'][$attributeValue] = [
+                        'value' => $attributeValue,
+                    ];
+                }
+            }
+
+            $variantGroups = array_values($variantGroups);
+
+            return view('client.product', compact('product', 'product_images', 'category_id', 'variantOptions', 'variantGroups'));
         } catch (\Exception $e) {
             abort(500);
         }
@@ -119,7 +154,7 @@ class SiteController extends Controller
     {
         $userCart = [];
         if (auth()->user()) {
-            $userCart = UserCart::where('user_id', auth()->user()->id)->get();
+            $userCart = UserCart::with(['product', 'productAttribute.attributeValue.attribute'])->where('user_id', auth()->user()->id)->get();
         }
 
         return view('client.cart', compact('userCart'));
@@ -130,7 +165,7 @@ class SiteController extends Controller
         try {
             $userId = auth()->user()?->id;
             if ($userId) {
-                $userCart = UserCart::with('product')->where('user_id', $userId)->get();
+                $userCart = UserCart::with(['product', 'productAttribute.attributeValue.attribute'])->where('user_id', $userId)->get();
 
                 return $this->success('ok.', $userCart);
             } else {
@@ -145,29 +180,101 @@ class SiteController extends Controller
     {
         try {
             $userId = auth()->user()?->id;
-            if ($userId) {
-                $item_exists = UserCart::where('user_id', $userId)
-                    ->where('product_id', $request->product_id)
-                    ->first();
-
-                if ($request->type == 'inc' && ! $item_exists) {
-                    UserCart::create([
-                        'user_id' => $userId,
-                        'product_id' => $request->product_id,
-                        'count' => 1,
-                    ]);
-                } elseif ($request->type == 'dec' && $item_exists) {
-                    UserCart::where('user_id', $userId)
-                        ->where('product_id', $request->product_id)
-                        ->delete();
-                }
-
-                return $this->success('cart updated successfully.');
-            } else {
+            if (! $userId) {
                 return $this->fail('invalid user');
             }
+
+            $product = Product::find($request->product_id);
+            if (! $product) {
+                return $this->fail('invalid product');
+            }
+
+            $productAttribute = null;
+            if ($request->filled('product_attribute_id')) {
+                $productAttribute = ProductAttribute::where('id', $request->product_attribute_id)
+                    ->where('product_id', $product->id)
+                    ->first();
+
+                if (! $productAttribute) {
+                    return $this->fail('invalid product variant');
+                }
+
+                if ((int) $productAttribute->quantity < 1) {
+                    return $this->fail('out of stock');
+                }
+            }
+
+            $query = UserCart::where('user_id', $userId)
+                ->where('product_id', $product->id);
+
+            if ($productAttribute) {
+                $query->where('product_attribute_id', $productAttribute->id);
+            } else {
+                $query->whereNull('product_attribute_id');
+            }
+
+            $item_exists = $query->first();
+
+            if ($request->type == 'inc') {
+                if ($item_exists) {
+                    $item_exists->increment('count');
+                } else {
+                    UserCart::create([
+                        'user_id' => $userId,
+                        'product_id' => $product->id,
+                        'product_attribute_id' => $productAttribute?->id,
+                        'count' => 1,
+                    ]);
+                }
+            } elseif ($request->type == 'dec' && $item_exists) {
+                if ((int) $item_exists->count > 1) {
+                    $item_exists->decrement('count');
+                } else {
+                    $item_exists->delete();
+                }
+            }
+
+            return $this->success('cart updated successfully.');
         } catch (\Exception $exception) {
             return $this->fail($exception->getMessage());
         }
+    }
+
+    private function buildVariantOption(ProductAttribute $attribute): array
+    {
+        $attributes = [];
+        $label = $attribute->attributeValue?->value;
+        $labelParts = [];
+
+        if ($label) {
+            foreach (preg_split('/\s*(?:\/|,)\s*/', $label) as $part) {
+                if (! str_contains($part, ':')) {
+                    continue;
+                }
+
+                [$attributeName, $attributeValue] = explode(':', $part, 2);
+                $attributeName = trim(strtolower($attributeName));
+                $attributeValue = trim($attributeValue);
+
+                if ($attributeName && $attributeValue) {
+                    $attributes[$attributeName] = $attributeValue;
+                    $labelParts[] = ucfirst($attributeName).': '.$attributeValue;
+                }
+            }
+        }
+
+        if (empty($attributes) && $attribute->attributeValue) {
+            $attributes[$attribute->attributeValue->attribute?->name ?? 'variant'] = $attribute->attributeValue->value;
+            $labelParts[] = $attribute->attributeValue->value;
+        }
+
+        return [
+            'id' => $attribute->id,
+            'price' => (float) $attribute->price,
+            'quantity' => (int) $attribute->quantity,
+            'in_stock' => (int) $attribute->quantity > 0,
+            'attributes' => $attributes,
+            'label' => implode(' / ', $labelParts) ?: 'Variant',
+        ];
     }
 }

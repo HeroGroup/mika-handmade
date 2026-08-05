@@ -6,6 +6,7 @@
             <div class="container">
                 <div class="row pdp-summery-row">
                     <div class="col-lg-6 col-md-12 col-12 pdp-left-side">
+                        @if ($category_id)
                         <div class="mobile-only">
                             <a href="{{ route('client.productList', $category_id) }}" class="back-btn">
                                 <span class="svg-ic">
@@ -19,6 +20,7 @@
                                 Back to Categories
                             </a>
                         </div>
+                        @endif
                         <div class="pdp-sliders-wrapper">
                             <div class="pdp-main-slider">
                                 <div class="pdp-main-itm">
@@ -53,6 +55,7 @@
                     <div class="col-lg-6 col-md-12 col-xl-5 col-12 pdp-right-side">
                         <div class="pdp-summery">
                             <div class="pdp-top d-flex align-items-center justify-content-between">
+                                @if ($category_id)
                                 <a href="{{ route('client.productList', $category_id) }}" class="back-btn desk-only">
                                     <span class="svg-ic">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="11" height="5" viewBox="0 0 11 5"
@@ -64,6 +67,7 @@
                                     </span>
                                     Back to Categories
                                 </a>
+                                @endif
                                 <a class="btn wish-btn" onclick="manipulateWishList('{{ $product->id }}')">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="17" height="14" viewBox="0 0 17 14" fill="none">
                                         <path fill-rule="evenodd" clip-rule="evenodd" d="M9.18991 3.10164C8.89678 3.37992 8.43395 3.37992 8.14082 3.10164L7.61627 2.60366C7.00231 2.0208 6.17289 1.66491 5.25627 1.66491C3.37348 1.66491 1.84718 3.17483 1.84718 5.03741C1.84718 6.82306 2.82429 8.29753 4.23488 9.50902C5.64667 10.7215 7.33461 11.5257 8.34313 11.9361C8.554 12.0219 8.77673 12.0219 8.9876 11.9361C9.99612 11.5257 11.6841 10.7215 13.0959 9.50901C14.5064 8.29753 15.4835 6.82305 15.4835 5.03741C15.4835 3.17483 13.9572 1.66491 12.0745 1.66491C11.1578 1.66491 10.3284 2.0208 9.71446 2.60366L9.18991 3.10164ZM8.66537 1.52219C7.7806 0.682237 6.57937 0.166016 5.25627 0.166016C2.53669 0.166016 0.332031 2.34701 0.332031 5.03741C0.332031 9.81007 5.61259 12.4457 7.76672 13.3223C8.34685 13.5584 8.98388 13.5584 9.56401 13.3223C11.7181 12.4457 16.9987 9.81006 16.9987 5.03741C16.9987 2.34701 14.794 0.166016 12.0745 0.166016C10.7514 0.166016 9.55013 0.682237 8.66537 1.52219Z" fill="white"></path>
@@ -72,7 +76,9 @@
                             </div>
                             <div class="section-title">
                                 <div class="cat-review-wrap d-flex align-items-center">
-                                    <div class="category-lbl">{{ $product->categories[0]->category->title}}</div>
+                                    @if ($product->categories->isNotEmpty() && $product->categories[0]?->category)
+                                        <div class="category-lbl">{{ $product->categories[0]->category->title }}</div>
+                                    @endif
                                     {{-- <div class="reviews-stars-wrap d-flex align-items-center">
                                         <div class="reviews-stars-outer">
                                             <img src="/assets/client/images/stars.png" alt="">
@@ -86,14 +92,158 @@
                                 <h2>{{ $product->title }}</h2>
                             </div>
                             <p>{{ $product->description }}</p>
-                            @if ($product->quantity > 0)
+                            @if ($variantGroups)
+                                <div class="variant-selector-wrap" style="margin-bottom: 16px;">
+                                    @foreach ($variantGroups as $variantGroup)
+                                        <div class="variant-group" style="margin-bottom: 10px;">
+                                            <label for="variant-{{ $variantGroup['name'] }}" style="display:block; margin-bottom: 4px; font-weight: 600;">{{ $variantGroup['label'] }}</label>
+                                            <select id="variant-{{ $variantGroup['name'] }}" class="variant-select form-control" data-group="{{ $variantGroup['name'] }}" onchange="window.updateVariantSelection && window.updateVariantSelection();">
+                                                <option value="">Select {{ $variantGroup['label'] }}</option>
+                                                @foreach ($variantGroup['options'] as $option)
+                                                    <option value="{{ $option['value'] }}">{{ $option['value'] }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                            <div class="variant-stock-message" style="margin-bottom: 12px; min-height: 24px; color: #61AFB3;"></div>
                             <div class="price-cart d-flex align-items-center">
-                                <a href="#" class="link-btn" onclick="addToCart('{{ $product->id }}', '{{ $product->image_url }}', '{{ $product->title }}', '{{ $product->price }}', '{{ $product->price }}')">Add to cart</a>
+                                <a href="javascript:void(0);" id="add-to-cart-btn" class="link-btn" onclick="return addSelectedVariantToCart('{{ $product->id }}', '{{ $product->image_url }}', '{{ $product->title }}')">Add to cart</a>
                                 <div class="price">
-                                    <ins>{{ $product->price }} <span class="currency-type">{{ env('CURRENCY') }}</span></ins>
+                                    <ins id="variant-price">{{ $product->price }} <span class="currency-type">{{ env('CURRENCY') }}</span></ins>
                                 </div>
                             </div>
-                            @endif
+                            <script>
+                                window.productVariants = @json($variantOptions);
+                                window.variantLookup = {};
+
+                                function formatVariantPrice(value) {
+                                    return new Intl.NumberFormat('en-US', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    }).format(value);
+                                }
+
+                                function buildVariantLookup() {
+                                    window.variantLookup = {};
+
+                                    if (!window.productVariants || !window.productVariants.length) {
+                                        return;
+                                    }
+
+                                    window.productVariants.forEach(function (variant) {
+                                        if (!variant || !variant.attributes) {
+                                            return;
+                                        }
+
+                                        var variantKey = Object.keys(variant.attributes).sort().map(function (key) {
+                                            return key + ':' + variant.attributes[key];
+                                        }).join('|');
+
+                                        window.variantLookup[variantKey] = variant;
+                                    });
+                                }
+
+                                function getSelectedVariant() {
+                                    var selects = Array.from(document.querySelectorAll('.variant-select'));
+                                    var selectedPairs = selects
+                                        .filter(function (select) {
+                                            return select && select.value;
+                                        })
+                                        .map(function (select) {
+                                            return (select.dataset.group || select.id.replace('variant-', '')) + ':' + select.value;
+                                        })
+                                        .sort();
+
+                                    if (!selectedPairs.length) {
+                                        return window.productVariants && window.productVariants[0] ? window.productVariants[0] : null;
+                                    }
+
+                                    var variantKey = selectedPairs.join('|');
+                                    return window.variantLookup[variantKey] || null;
+                                }
+
+                                function updateVariantSelection() {
+                                    buildVariantLookup();
+
+                                    var selectedVariant = getSelectedVariant();
+                                    var basePrice = {{ (float) $product->price }};
+                                    var priceElement = document.getElementById('variant-price');
+                                    var stockMessageElement = document.querySelector('.variant-stock-message');
+                                    var addButton = document.getElementById('add-to-cart-btn');
+
+                                    var displayedPrice = basePrice;
+                                    var inStock = true;
+                                    var hasVariantSelection = false;
+
+                                    if (selectedVariant && selectedVariant.id) {
+                                        displayedPrice = selectedVariant.price;
+                                        inStock = !!selectedVariant.in_stock;
+                                        hasVariantSelection = true;
+                                    }
+
+                                    if (priceElement) {
+                                        priceElement.innerHTML = formatVariantPrice(displayedPrice) + ' <span class="currency-type">{{ env('CURRENCY') }}</span>';
+                                    }
+
+                                    if (stockMessageElement) {
+                                        if (hasVariantSelection) {
+                                            stockMessageElement.textContent = inStock ? 'In stock' : 'Out of stock';
+                                            stockMessageElement.style.color = inStock ? '#61AFB3' : '#d9534f';
+                                        } else {
+                                            stockMessageElement.textContent = '';
+                                        }
+                                    }
+
+                                    if (addButton) {
+                                        var shouldDisable = hasVariantSelection && !inStock;
+                                        addButton.disabled = shouldDisable;
+                                        addButton.classList.toggle('disabled', shouldDisable);
+                                        addButton.setAttribute('aria-disabled', shouldDisable ? 'true' : 'false');
+                                        addButton.style.pointerEvents = shouldDisable ? 'none' : '';
+                                    }
+                                }
+
+                                function addSelectedVariantToCart(productId, image, title) {
+                                    var selectedVariant = getSelectedVariant();
+                                    if (!selectedVariant || !selectedVariant.id) {
+                                        return false;
+                                    }
+
+                                    if (!selectedVariant.in_stock) {
+                                        return false;
+                                    }
+
+                                    var variantLabel = selectedVariant.label || Object.keys(selectedVariant.attributes || {}).map(function (key) {
+                                        return selectedVariant.attributes[key];
+                                    }).join(' / ');
+
+                                    addToCart(productId, image, title, selectedVariant.price, selectedVariant.price, selectedVariant.id, variantLabel);
+                                    return false;
+                                }
+
+                                function initVariantSelection() {
+                                    var selects = document.querySelectorAll('.variant-select');
+
+                                    selects.forEach(function (select) {
+                                        select.removeEventListener('change', updateVariantSelection);
+                                        select.addEventListener('change', updateVariantSelection);
+                                        select.onchange = function () {
+                                            window.updateVariantSelection && window.updateVariantSelection();
+                                        };
+                                    });
+
+                                    window.updateVariantSelection = updateVariantSelection;
+                                    window.addSelectedVariantToCart = addSelectedVariantToCart;
+                                    updateVariantSelection();
+                                    setTimeout(updateVariantSelection, 0);
+                                }
+
+                                document.addEventListener('DOMContentLoaded', initVariantSelection);
+                                window.addEventListener('load', initVariantSelection);
+                                window.addEventListener('pageshow', initVariantSelection);
+                            </script>
                         </div>
                     </div>
                 </div>

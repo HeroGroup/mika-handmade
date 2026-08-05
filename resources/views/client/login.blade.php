@@ -1,4 +1,4 @@
-@extends('layouts.client.app')
+@extends('layouts.client.site', ['page_title' => 'Login'])
 @section('content')
     <!--wrapper start here-->
     <div class="wrapper">
@@ -20,7 +20,9 @@
                             <h2>Log In</h2> 
                         </div> 
                         <div class="form-wrapper">
-                            <form class="login-form">
+                            <form class="login-form" method="POST" action="{{ url('/login') }}">
+                                @csrf
+                                <input type="hidden" name="portal" value="client">
                                 <div class="form-container">
                                     <div class="form-heading">
                                         <h4>Log in</h4>
@@ -34,13 +36,13 @@
                                         <div class="col-md-6 col-12">
                                             <div class="form-group">
                                                 <label>E-mail<sup aria-hidden="true">*</sup>:</label>
-                                                <input type="email" class="form-control" placeholder="shop@company.com" required="">
+                                                <input name="email" type="email" class="form-control" placeholder="shop@company.com" required="">
                                             </div>
                                         </div>
                                         <div class="col-md-6 col-12">
                                             <div class="form-group">
                                                 <label>Password<sup aria-hidden="true">*</sup>:</label>
-                                                <input type="text" class="form-control" placeholder="**********" required="">
+                                                <input name="password" type="password" class="form-control" placeholder="**********" required="">
                                             </div>
                                         </div> 
                                     </div> 
@@ -50,7 +52,7 @@
                                         <div class="col-lg-12  col-12 d-flex align-items-center justify-content-end mobile-direction-column">  
                                             <a href="#" class="forgot-pass">Forgot Password?</a>
                                             <button class="btn submit-btn" type="submit">
-                                                Send message 
+                                                Login
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="35" height="14" viewBox="0 0 35 14" fill="none">
                                                     <path d="M25.0749 14L35 7L25.0805 0L29.12 6.06667H0V7.93333H29.12L25.0749 14Z"></path>
                                                 </svg>

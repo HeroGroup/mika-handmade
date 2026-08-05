@@ -25,8 +25,6 @@
                 <div class="price">
                     <ins>{{ $product->price }} <span class="currency-type">{{ env('CURRENCY') }}</span></ins>
                 </div>
-                <a onclick="addToCart('{{ $id }}', '{{ $product->image_url }}', '{{ $product->title }}', '{{ $product->price }}', '{{ $product->price }}')"
-                    class="link-btn">Add to cart</a>
                 <?php $wishListed = \App\Models\WishList::where('user_id', auth()->user()?->id)->where('product_id', $product->id)->first(); ?>
                 <a class="wish-btn" tabindex="0" onclick="manipulateWishList('{{ $id }}')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="10" viewBox="0 0 12 10" fill="none">

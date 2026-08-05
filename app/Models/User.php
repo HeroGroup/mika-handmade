@@ -50,4 +50,7 @@ class User extends Authenticatable
             'user_type' => UserType::class,
         ];
     }
-}
+    public function address()
+    {
+        return $this->hasOne(UserAddress::class);
+    }}

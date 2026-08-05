@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Category;
 use App\Models\Contact;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -25,6 +26,10 @@ class ViewDataProvider extends ServiceProvider
 
     public function get_menus()
     {
+        if (! Schema::hasTable('categories')) {
+            return [];
+        }
+
         $menus = [];
         $top_level_categories = Category::where('is_active', true)->whereNull('category_id')->get();
         foreach ($top_level_categories as $top_level_category) {
@@ -41,11 +46,22 @@ class ViewDataProvider extends ServiceProvider
 
     public function get_active_sub_categories()
     {
+        if (! Schema::hasTable('categories')) {
+            return collect();
+        }
+
         return Category::where('is_active', true)->whereNotNull('category_id')->get();
     }
 
     public function get_footer_data()
     {
+        if (! Schema::hasTable('settings')) {
+            return [
+                'about_us' => null,
+                'instagram_link' => null,
+            ];
+        }
+
         $about_us = Setting::where('key', 'ABOUT_US')->first()?->value;
         $instagram_link = Setting::where('key', 'INSTAGRAM_LINK')->first()?->value;
 
@@ -57,6 +73,10 @@ class ViewDataProvider extends ServiceProvider
 
     public function get_new_messages_count()
     {
+        if (! Schema::hasTable('contacts')) {
+            return 0;
+        }
+
         $messages_count = Contact::where('has_seen', false)->count();
 
         return $messages_count;

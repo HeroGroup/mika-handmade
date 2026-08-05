@@ -41,29 +41,30 @@
     <!--scripts end here-->
 
     <script>
+        window.isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
         updateCart();
         getWishListCount();
-        
-        function updateCart() {
-            var local_cart_items = getUserCartFromStorage();
-            
-            var local_cart_items_length = Object.keys(local_cart_items).length;
+
+        function renderCartItems(cartItems) {
+            var normalizedItems = cartItems || {};
             var elements = document.getElementsByClassName("cartCount");
-            for (const el of elements)
-                el.innerHTML = local_cart_items_length;
+            for (const el of elements) {
+                el.innerHTML = Object.keys(normalizedItems).length;
+            }
 
-            
             var carts = document.getElementsByClassName("mini-cart-body");
-            for (const el of carts)
+            for (const el of carts) {
                 el.innerHTML = "";
+            }
 
-                var total = 0;
-            for (const key in local_cart_items) {
-                var item = local_cart_items[key];
-                total += parseFloat(item.priceAfter);
+            var total = 0;
+            for (const key in normalizedItems) {
+                var item = normalizedItems[key];
+                total += parseFloat(item.priceAfter || item.priceBefore || 0);
                 const child = document.createElement("div");
                 child.setAttribute("class", "mini-cart-item");
                 child.setAttribute("id", `cart_item_${key}`);
+                var variantLabel = item.variantLabel ? `<div class="mini-cart-variant">${item.variantLabel}</div>` : '';
                 child.innerHTML = `<div class="mini-cart-image">
                         <a href="#" title="SPACE BAG">
                             <img src="${item.image}" alt="${item.title}">
@@ -71,11 +72,12 @@
                     </div>
                     <div class="mini-cart-details">
                         <p class="mini-cart-title"><a href="#">${item.title}</a></p>
+                        ${variantLabel}
                         <div class="pvarprice d-flex align-items-center justify-content-between">
                             <div class="price">
                                 <ins>${item.priceBefore} <span class="currency-type">{{ env('CURRENCY') }}</span></ins><del>${item.priceAfter} {{ env('CURRENCY') }}</del>
                             </div>
-                            <a class="remove_item" title="Remove item" href="#" onclick="removeFromCart('${key}')">
+                            <a class="remove_item" title="Remove item" href="#" onclick="removeFromCart('${item.productId}', '${item.productAttributeId || ''}')">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"
                                     fill="none">
                                     <path
@@ -99,12 +101,55 @@
                             </a>
                         </div>
                     </div>`;
-                    for (const el of carts)
-                        el.append(child);
+                for (const el of carts) {
+                    el.append(child);
+                }
             }
+
             var totals = document.getElementsByClassName("mini-total-price");
-            for (const el of totals)
+            for (const el of totals) {
                 el.innerHTML = `${total.toFixed(2)} {{ env('CURRENCY') }}`;
+            }
+        }
+
+        function normalizeCartItems(items) {
+            if (!items) {
+                return {};
+            }
+
+            if (Array.isArray(items)) {
+                var normalized = {};
+                items.forEach(function (item) {
+                    var product = item.product || {};
+                    var productAttribute = item.productAttribute || item.product_attribute || null;
+                    var attributeValue = productAttribute?.attributeValue || productAttribute?.attribute_value || null;
+                    var price = productAttribute?.price || product?.price || 0;
+                    var cartKey = getCartItemKey(product.id || item.product_id, productAttribute?.id || item.product_attribute_id || null);
+                    normalized[cartKey] = {
+                        id: cartKey,
+                        productId: product.id || item.product_id,
+                        productAttributeId: productAttribute?.id || item.product_attribute_id || null,
+                        image: product.image_url || item.image || '',
+                        title: product.title || item.title || '',
+                        priceBefore: price,
+                        priceAfter: price,
+                        variantLabel: attributeValue?.value || item.variantLabel || null,
+                    };
+                });
+                return normalized;
+            }
+
+            return items;
+        }
+
+        function updateCart() {
+            var localCartItems = getUserCartFromStorage();
+            if (window.isAuthenticated) {
+                getCartFromServer();
+                return;
+            }
+
+            renderCartItems(localCartItems);
         }
 
         function getWishListCount() {
@@ -128,7 +173,16 @@
             var xhr = new XMLHttpRequest();
             xhr.open("GET", "{{ route('client.cart.api') }}", true);
             xhr.addEventListener("load", function () {
-                var response = JSON.parse(xhr.response);
+                try {
+                    var response = JSON.parse(xhr.response);
+                    var serverCartItems = normalizeCartItems(response.data || []);
+                    if (Object.keys(serverCartItems).length) {
+                        localStorage.setItem("userCart", JSON.stringify(serverCartItems));
+                    }
+                    renderCartItems(serverCartItems);
+                } catch (error) {
+                    renderCartItems(getUserCartFromStorage());
+                }
             });
 
             xhr.send();
@@ -151,10 +205,15 @@
             return userCart;
         }
 
-        function sendCartToServer(id, type) {
+        function getCartItemKey(productId, productAttributeId) {
+            return productAttributeId ? `${productId}-${productAttributeId}` : `${productId}`;
+        }
+
+        function sendCartToServer(productId, productAttributeId, type) {
             var formData = createFormData({
                 _token: "{{csrf_token()}}",
-                product_id: id,
+                product_id: productId,
+                product_attribute_id: productAttributeId || null,
                 type,
             });
 
@@ -167,36 +226,53 @@
             sendRequest(params);
         }
 
-        function addToCart(id, image, title, priceBefore, priceAfter) {
+        function addToCart(id, image, title, priceBefore, priceAfter, productAttributeId = null, variantLabel = null) {
+            var cartKey = getCartItemKey(id, productAttributeId);
             var userCart = getUserCartFromStorage();
 
-            if (!Object.keys(userCart).includes(id)) {
-                userCart[id] = {
+            if (!Object.keys(userCart).includes(cartKey)) {
+                userCart[cartKey] = {
+                    id: cartKey,
+                    productId: id,
+                    productAttributeId,
                     image,
                     title,
                     priceBefore,
                     priceAfter,
+                    variantLabel,
                 };
                 localStorage.setItem("userCart", JSON.stringify(userCart));
             }
 
-            sendCartToServer(id, "inc");
+            sendCartToServer(id, productAttributeId, "inc");
             reloadPageIfInCart();
         }
 
-        function removeFromCart(id) {
+        function removeFromCart(id, productAttributeId = null) {
+            var normalizedProductAttributeId = productAttributeId || null;
+            var cartKey = getCartItemKey(id, normalizedProductAttributeId);
             var userCart = getUserCartFromStorage();
 
-            if (Object.keys(userCart).includes(id)) {
-                delete userCart[id];
+            if (Object.keys(userCart).includes(cartKey)) {
+                delete userCart[cartKey];
                 localStorage.setItem("userCart", JSON.stringify(userCart));
             }
 
-            // remove from cart page
-            var elm = document.getElementById(`cart-item-${id}`);
-            if (elm) elm.remove();
-                
-            sendCartToServer(id, "dec");
+            var elementIds = [`cart-item-${cartKey}`];
+            if (!normalizedProductAttributeId) {
+                elementIds.push(`cart-item-${id}-default`);
+            } else {
+                elementIds.push(`cart-item-${id}-${normalizedProductAttributeId}`);
+            }
+
+            elementIds.forEach(function (elementId) {
+                var elm = document.getElementById(elementId);
+                if (elm) {
+                    elm.remove();
+                }
+            });
+
+            sendCartToServer(id, normalizedProductAttributeId, "dec");
             reloadPageIfInCart();
         }
 

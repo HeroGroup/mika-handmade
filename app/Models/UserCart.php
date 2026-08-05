@@ -10,7 +10,12 @@ class UserCart extends Model
     protected $fillable = [
         'user_id',
         'product_id',
+        'product_attribute_id',
         'count',
+    ];
+
+    protected $casts = [
+        'count' => 'integer',
     ];
 
     public function user(): BelongsTo
@@ -21,5 +26,10 @@ class UserCart extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function productAttribute(): BelongsTo
+    {
+        return $this->belongsTo(ProductAttribute::class);
     }
 }

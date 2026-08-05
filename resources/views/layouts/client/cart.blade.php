@@ -12,6 +12,7 @@
     </div>
     <div id="cart-body" class="mini-cart-has-item">
         <div class="mini-cart-body"></div>
+        <div class="mini-cart-empty-message" style="display:none;">Your cart is empty.</div>
 
         <div class="mini-cart-footer">
             <div class="mini-cart-footer-total-row d-flex align-items-center justify-content-between">

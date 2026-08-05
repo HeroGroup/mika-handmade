@@ -21,7 +21,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($userCart as $item)
-                                  <tr id="cart-item-{{ $item->product->id }}">
+                                  <tr id="cart-item-{{ $item->product->id }}-{{ $item->product_attribute_id ?? 'default' }}">
                                     <td data-label="Product">
                                         <a href="{{ route('client.product', $item->product->id) }}" class="pro-img-cart">
                                             <img src="{{ $item->product->image_url }}" alt="{{ $item->product->title }}">
@@ -29,12 +29,15 @@
                                     </td> 
                                     <td data-label="Name">
                                         <a href="/product">{{ $item->product->title }}</a>
+                                        @if ($item->productAttribute?->attributeValue)
+                                            <div style="font-size: 12px; color: #777;">{{ $item->productAttribute->attributeValue->value }}</div>
+                                        @endif
                                     </td>
                                     <td data-label="Price"> 
-                                        {{ number_format($item->product->price)}} {{ env('CURRENCY') }}
+                                        {{ number_format($item->productAttribute?->price ?? $item->product->price) }} {{ env('CURRENCY') }}
                                     </td> 
                                     <td data-label="Total">
-                                        <a href="javascript:;" class="remove-btn" onclick="removeFromCart('{{ $item->product->id }}')">
+                                        <a href="javascript:;" class="remove-btn" onclick="removeFromCart('{{ $item->product->id }}', '{{ $item->product_attribute_id }}')">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false" role="presentation"
                                                 class="icon icon-remove">
                                                 <path
@@ -52,7 +55,7 @@
                             </table>
                         </div>
                     </div>
-                    <?php $total = 0; foreach ($userCart as $item) $total += $item->product->price; ?>
+                    <?php $total = 0; foreach ($userCart as $item) $total += $item->productAttribute?->price ?? $item->product->price; ?>
                     <div class="col-lg-3 col-12">
                         <div class="cart-summery">
                             <ul>
