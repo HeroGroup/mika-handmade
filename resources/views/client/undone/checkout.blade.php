@@ -328,7 +328,7 @@
                                                 <div class="checkbox-custom">
                                                     <input type="checkbox" id="agg">
                                                     <label for="agg">
-                                                        <span>I have read and agree to the <a href="/privacy-policy">Terms &amp; Conditions.</a>  </span>
+                                                        <span>I have read and agree to the <a href="{{ route('client.privacyPolicy') }}">Terms &amp; Conditions.</a>  </span>
                                                     </label>
                                                 </div>
                                                 <button class="btn continue-btn" type="submit">

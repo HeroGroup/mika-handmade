@@ -47,7 +47,7 @@
                             <li><a href="/order-summary">Order status</a></li>
                             <li><a href="{{ route('client.aboutUs') }}">About</a></li>
                             <li><a href="{{ route('client.faqs') }}">FAQs</a></li>
-                            <li><a href="/checkout">Terms</a></li>
+                            <li><a href="{{ route('client.privacyPolicy') }}">Terms</a></li>
                             <li><a href="{{ route('client.contactUs') }}">Contact Us</a></li>
                         </ul>
                     </div>

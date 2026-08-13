@@ -2,6 +2,7 @@
 @section('content')
     <!--wrapper start here-->
     <div class="wrapper">
+        @if($about_us_header)
         <section class="common-banner-section">
             <div class="container">
                 <div class="row">
@@ -10,12 +11,13 @@
                             <div class="section-title">
                                 <h2>About <b>us</b></h2>
                             </div>
-                            <p>{{ $about_us }}</p>
+                            <p>{{ $about_us_header }}</p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
+        @endif
         <section class="about-our-shop-section padding-bottom">
             <div class="container">
                 @foreach ($abouts as $key=>$about)

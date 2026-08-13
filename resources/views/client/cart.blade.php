@@ -28,7 +28,7 @@
                                         </a>
                                     </td> 
                                     <td data-label="Name">
-                                        <a href="/product">{{ $item->product->title }}</a>
+                                        <a href="{{ route('client.product', $item->product->id) }}">{{ $item->product->title }}</a>
                                         @if ($item->productAttribute?->attributeValue)
                                             <div style="font-size: 12px; color: #777;">{{ $item->productAttribute->attributeValue->value }}</div>
                                         @endif
@@ -37,7 +37,11 @@
                                         {{ number_format($item->productAttribute?->price ?? $item->product->price) }} {{ env('CURRENCY') }}
                                     </td> 
                                     <td data-label="Total">
-                                        <a href="javascript:;" class="remove-btn" onclick="removeFromCart('{{ $item->product->id }}', '{{ $item->product_attribute_id }}')">
+                                        <div style="display:inline-flex; align-items:center; gap:8px;">
+                                            <button class="qty-decrease" onclick="changeCartCount('{{ $item->product->id }}', '{{ $item->product_attribute_id }}', 'dec')">-</button>
+                                            <span class="cart-item-count" id="cart-item-count-{{ $item->product->id }}-{{ $item->product_attribute_id ?? 'default' }}">{{ $item->count }}</span>
+                                            <button class="qty-increase" onclick="addToCart('{{ $item->product->id }}', '{{ $item->product->image_url }}', '{{ $item->product->title }}', '{{ $item->productAttribute?->price ?? $item->product->price }}', '{{ $item->productAttribute?->price ?? $item->product->price }}', '{{ $item->product_attribute_id }}')">+</button>
+                                            <a href="javascript:;" class="remove-btn" onclick="removeFromCart('{{ $item->product->id }}', '{{ $item->product_attribute_id }}')">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false" role="presentation"
                                                 class="icon icon-remove">
                                                 <path
@@ -47,7 +51,8 @@
                                                     d="M6.55 5.25a.5.5 0 00-.5.5v6a.5.5 0 001 0v-6a.5.5 0 00-.5-.5zM9.45 5.25a.5.5 0 00-.5.5v6a.5.5 0 001 0v-6a.5.5 0 00-.5-.5z"
                                                     fill="currentColor"></path>
                                             </svg> 
-                                        </a>
+                                            </a>
+                                        </div>
                                     </td>
                                   </tr> 
                                     @endforeach
@@ -55,12 +60,19 @@
                             </table>
                         </div>
                     </div>
-                    <?php $total = 0; foreach ($userCart as $item) $total += $item->productAttribute?->price ?? $item->product->price; ?>
+                    <?php 
+                        $total = 0;
+                        $count = 0;
+                        foreach ($userCart as $item) {
+                            $total += ($item->productAttribute?->price ?? $item->product->price) * $item->count;
+                            $count += $item->count;
+                        }
+                    ?>
                     <div class="col-lg-3 col-12">
                         <div class="cart-summery">
                             <ul>
                                 <li>
-                                    <span class="cart-sum-left">{{ count($userCart) }} item</span>
+                                    <span class="cart-sum-left">{{ $count }} items</span>
                                     <span class="cart-sum-right">{{ number_format($total)}} {{ env('CURRENCY') }}</span>
                                 </li> 
                                 <li>

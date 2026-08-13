@@ -99,7 +99,7 @@
                                             <div class="checkbox-custom">
                                                 <input type="checkbox" id="ch1">
                                                 <label for="ch1">
-                                                    <span>I have read and agree to the <a href="/privacy-policy">Terms &amp; Conditions.</a>  </span>
+                                                    <span>I have read and agree to the <a href="{{ route('client.privacyPolicy') }}">Terms &amp; Conditions.</a>  </span>
                                                 </label>
                                             </div> 
                                         </div>

@@ -25,6 +25,11 @@
                 <div class="price">
                     <ins>{{ $product->price }} <span class="currency-type">{{ env('CURRENCY') }}</span></ins>
                 </div>
+                <div class="product-cart-controls" data-product-id="{{ $id }}" data-product-attribute-id="" style="display:none; align-items:center; gap:6px; margin-top:8px;">
+                    <button class="prod-qty-decrease" onclick="changeCartCount('{{ $id }}', '', 'dec')">-</button>
+                    <span class="product-cart-count">0</span>
+                    <button class="prod-qty-increase" onclick="addToCart('{{ $id }}', '{{ $product->image_url }}', '{{ $product->title }}', '{{ $product->price }}', '{{ $product->price }}')">+</button>
+                </div>
                 <?php $wishListed = \App\Models\WishList::where('user_id', auth()->user()?->id)->where('product_id', $product->id)->first(); ?>
                 <a class="wish-btn" tabindex="0" onclick="manipulateWishList('{{ $id }}')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="10" viewBox="0 0 12 10" fill="none">

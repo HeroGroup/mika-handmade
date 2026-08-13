@@ -109,7 +109,7 @@ class ProfileController extends Controller
             if ($userId) {
                 $item_exists = WishList::where('user_id', $userId)
                     ->where('product_id', $request->product_id)
-                    ->first();
+                    ->exists();
 
                 if ($item_exists) {
                     WishList::where('user_id', $userId)

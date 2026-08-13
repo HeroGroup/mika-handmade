@@ -100,16 +100,22 @@
                                             <select id="variant-{{ $variantGroup['name'] }}" class="variant-select form-control" data-group="{{ $variantGroup['name'] }}" onchange="window.updateVariantSelection && window.updateVariantSelection();">
                                                 <option value="">Select {{ $variantGroup['label'] }}</option>
                                                 @foreach ($variantGroup['options'] as $option)
-                                                    <option value="{{ $option['value'] }}">{{ $option['value'] }}</option>
+                                                    <option value="{{ $option['value'] }}" @if($loop->first) selected @endif>{{ $option['value'] }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
                                     @endforeach
                                 </div>
+                                <div id="variant-select-prompt" class="variant-select-prompt" style="display:none; margin-bottom: 12px; color: #333; font-weight:600;">Select {{ $variantGroups[0]['label'] ?? 'option' }} first</div>
                             @endif
                             <div class="variant-stock-message" style="margin-bottom: 12px; min-height: 24px; color: #61AFB3;"></div>
                             <div class="price-cart d-flex align-items-center">
-                                <a href="javascript:void(0);" id="add-to-cart-btn" class="link-btn" onclick="return addSelectedVariantToCart('{{ $product->id }}', '{{ $product->image_url }}', '{{ $product->title }}')">Add to cart</a>
+                                <a href="javascript:void(0);" id="add-to-cart-btn" data-product-id="{{ $product->id }}" class="link-btn" onclick="return addSelectedVariantToCart('{{ $product->id }}', '{{ $product->image_url }}', '{{ $product->title }}')">Add to cart</a>
+                                <div class="product-page-cart" style="display:none; align-items:center; gap:6px; margin-left:12px;">
+                                    <button id="product-page-decrease-{{ $product->id }}" onclick="(function(){ var sel = getSelectedVariant(); if(sel && sel.id){ changeCartCount('{{ $product->id }}', sel.id, 'dec'); } else { changeCartCount('{{ $product->id }}', null, 'dec'); } })()">-</button>
+                                    <span id="product-page-count-{{ $product->id }}" class="product-page-cart-count" data-product-id="{{ $product->id }}" data-product-attribute-id="">0</span>
+                                    <button id="product-page-increase-{{ $product->id }}" onclick="addSelectedVariantToCart('{{ $product->id }}', '{{ $product->image_url }}', '{{ $product->title }}')">+</button>
+                                </div>
                                 <div class="price">
                                     <ins id="variant-price">{{ $product->price }} <span class="currency-type">{{ env('CURRENCY') }}</span></ins>
                                 </div>
@@ -117,6 +123,7 @@
                             <script>
                                 window.productVariants = @json($variantOptions);
                                 window.variantLookup = {};
+                                window.hasVariantGroups = {{ $variantGroups ? 'true' : 'false' }};
 
                                 function formatVariantPrice(value) {
                                     return new Intl.NumberFormat('en-US', {
@@ -157,6 +164,9 @@
                                         .sort();
 
                                     if (!selectedPairs.length) {
+                                        // If there are variant groups and user hasn't selected any option,
+                                        // treat as no selection so UI prompts the user to choose.
+                                        if (window.hasVariantGroups) return null;
                                         return window.productVariants && window.productVariants[0] ? window.productVariants[0] : null;
                                     }
 
@@ -183,26 +193,66 @@
                                         hasVariantSelection = true;
                                     }
 
-                                    if (priceElement) {
-                                        priceElement.innerHTML = formatVariantPrice(displayedPrice) + ' <span class="currency-type">{{ env('CURRENCY') }}</span>';
-                                    }
-
-                                    if (stockMessageElement) {
-                                        if (hasVariantSelection) {
-                                            stockMessageElement.textContent = inStock ? 'In stock' : 'Out of stock';
-                                            stockMessageElement.style.color = inStock ? '#61AFB3' : '#d9534f';
-                                        } else {
-                                            stockMessageElement.textContent = '';
+                                    // If product has variant groups but user hasn't selected one,
+                                    // hide price and show prompt to select an attribute first.
+                                    var promptEl = document.getElementById('variant-select-prompt');
+                                    if (window.hasVariantGroups && !hasVariantSelection) {
+                                        if (priceElement) priceElement.style.display = 'none';
+                                        if (promptEl) promptEl.style.display = '';
+                                        if (addButton) {
+                                            addButton.style.display = 'none';
                                         }
+                                        // hide product page inline controls
+                                        try {
+                                            var pageControls = document.querySelectorAll('.product-page-cart');
+                                            for (const pc of pageControls) {
+                                                pc.style.display = 'none';
+                                            }
+                                        } catch (e) {}
+                                    } else {
+                                        if (priceElement) {
+                                            priceElement.style.display = '';
+                                            priceElement.innerHTML = formatVariantPrice(displayedPrice) + ' <span class="currency-type">{{ env('CURRENCY') }}</span>';
+                                        }
+                                        if (promptEl) promptEl.style.display = 'none';
+                                        if (stockMessageElement) {
+                                            if (hasVariantSelection) {
+                                                stockMessageElement.textContent = inStock ? 'In stock' : 'Out of stock';
+                                                stockMessageElement.style.color = inStock ? '#61AFB3' : '#d9534f';
+                                            } else {
+                                                stockMessageElement.textContent = '';
+                                            }
+                                        }
+                                        if (addButton) {
+                                            addButton.style.display = '';
+                                            var shouldDisable = hasVariantSelection && !inStock;
+                                            addButton.disabled = shouldDisable;
+                                            addButton.classList.toggle('disabled', shouldDisable);
+                                            addButton.setAttribute('aria-disabled', shouldDisable ? 'true' : 'false');
+                                            addButton.style.pointerEvents = shouldDisable ? 'none' : '';
+                                        }
+                                        // show or hide inline product page controls based on count
+                                        try {
+                                            var pageControls = document.querySelectorAll('.product-page-cart');
+                                            for (const pc of pageControls) {
+                                                var ppid = pc.querySelector('.product-page-cart-count')?.getAttribute('data-product-id') || '';
+                                                var ppaid = pc.querySelector('.product-page-cart-count')?.getAttribute('data-product-attribute-id') || '';
+                                                var pcCount = getCartItemCount(ppid, ppaid);
+                                                pc.style.display = pcCount ? 'inline-flex' : 'none';
+                                            }
+                                        } catch (e) {}
                                     }
 
-                                    if (addButton) {
-                                        var shouldDisable = hasVariantSelection && !inStock;
-                                        addButton.disabled = shouldDisable;
-                                        addButton.classList.toggle('disabled', shouldDisable);
-                                        addButton.setAttribute('aria-disabled', shouldDisable ? 'true' : 'false');
-                                        addButton.style.pointerEvents = shouldDisable ? 'none' : '';
-                                    }
+                                    // update product page cart count for selected variant
+                                    try {
+                                        var countEl = document.getElementById('product-page-count-{{ $product->id }}');
+                                        if (countEl) {
+                                            countEl.setAttribute('data-product-attribute-id', selectedVariant?.id || '');
+                                        }
+                                        if (typeof updateProductDisplays === 'function') {
+                                            updateProductDisplays();
+                                        }
+                                    } catch (e) {}
                                 }
 
                                 function addSelectedVariantToCart(productId, image, title) {

@@ -39,6 +39,12 @@
                                     </svg>
                                 </a>
                             </li>
+                            @else
+                            <li class="profile-header">
+                                <a href="{{ route('client.login') }}">
+                                    <span class="icon-lable">Login / Register</span>
+                                </a>
+                            </li>
                             @endif
                             <li class="wishlist-header">
                                 <a href="/wishlist">

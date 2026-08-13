@@ -32,6 +32,7 @@ Route::post('/wishlist/add', [ProfileController::class, 'addToWishList'])->name(
 Route::get('/order', [OrderController::class, 'show'])->name('client.order');
 
 Route::get('/about-us', [SiteController::class, 'aboutUs'])->name('client.aboutUs');
+Route::get('/privacy-policy', [SiteController::class, 'privacyPolicy'])->name('client.privacyPolicy');
 
 Route::get('/faqs', [SiteController::class, 'faqs'])->name('client.faqs');
 

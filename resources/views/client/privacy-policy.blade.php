@@ -1,7 +1,8 @@
-@extends('layouts.client.app')
+@extends('layouts.client.site', ['page_title' => 'Privacy Policy'])
 @section('content')
     <!--wrapper start here-->
     <div class="wrapper">
+        @if ($privacy_policy_header)
         <section class="common-banner-section">
             <div class="container">
                 <div class="row">
@@ -18,13 +19,13 @@
                             <div class="section-title">
                                 <h2>  <b>Policy </b> privacy </h2>
                             </div>
-                            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. 
-                                Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown.</p>
+                            <p>{{ $privacy_policy_header }}</p>
                         </div>
                     </div>
                 </div>
             </div>
         </section> 
+        @endif
         <section class="policy-page cms-page  padding-bottom  padding-top">
             <div class="container">
                 <div class="section-title">

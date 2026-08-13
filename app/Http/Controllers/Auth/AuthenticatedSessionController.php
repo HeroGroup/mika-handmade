@@ -52,9 +52,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return $user?->user_type === UserType::Admin
-            ? redirect('/admin/login')
-            : redirect('/');
+        // Allow callers to request a specific redirect after logout (e.g. client pages).
+        $redirectTo = $request->input('redirect_to');
+
+        if (! $redirectTo && $user?->user_type === UserType::Admin) {
+            return redirect('/admin/login');
+        }
+
+        return $redirectTo ? redirect($redirectTo) : redirect('/');
     }
 
     protected function logoutAndInvalidate(Request $request): void

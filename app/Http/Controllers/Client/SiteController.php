@@ -100,10 +100,21 @@ class SiteController extends Controller
     public function aboutUs()
     {
         try {
-            $about_us = Setting::where('key', 'ABOUT_US')->first()?->value;
+            $about_us_header = Setting::where('key', 'ABOUT_US_HEADER')->first()?->value;
             $abouts = About::where('is_active', true)->get();
 
-            return view('client.about', compact('about_us', 'abouts'));
+            return view('client.about', compact('about_us_header', 'abouts'));
+        } catch (\Exception $e) {
+            abort(500);
+        }
+    }
+
+    public function privacyPolicy()
+    {
+        try {
+            $privacy_policy_header = Setting::where('key', 'PRIVACY_POLICY_HEADER')->first()?->value;
+
+            return view('client.privacy-policy', compact('privacy_policy_header'));
         } catch (\Exception $e) {
             abort(500);
         }
