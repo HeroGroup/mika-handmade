@@ -44,7 +44,6 @@
                     <div class="footer-widget">
                         <h4> Shop: </h4>
                         <ul>
-                            <li><a href="/order-summary">Order status</a></li>
                             <li><a href="{{ route('client.aboutUs') }}">About</a></li>
                             <li><a href="{{ route('client.faqs') }}">FAQs</a></li>
                             <li><a href="{{ route('client.privacyPolicy') }}">Terms</a></li>
@@ -56,10 +55,8 @@
                     <div class="footer-widget">
                         <h4> Account: </h4>
                         <ul>
-                            <li><a href="/product-list">Products</a></li>
-                            <li><a href="#">Categories</a></li>
-                            <li><a href="/cart">My Cart</a></li>
-                            <li><a href="/account">My Profile</a></li>
+                            <li><a href="{{ route('client.cart') }}">My Cart</a></li>
+                            <li><a href="{{ route('client.profile') }}">My Profile</a></li>
                         </ul>
                     </div>
                 </div>
