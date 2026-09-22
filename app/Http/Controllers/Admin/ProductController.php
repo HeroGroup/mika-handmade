@@ -292,8 +292,8 @@ class ProductController extends Controller
 
     private function syncProductVariants(Product $product, Request $request): void
     {
-        $product->attributes()->delete();
         $product->quantities()->delete();
+        $product->attributes()->delete();
         $this->createProductVariants($product, $request);
     }
 }
