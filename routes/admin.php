@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AboutController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\SettingController;
@@ -50,6 +51,9 @@ Route::prefix('admin')->group(function () {
 
             Route::resource('messages', ContactController::class)->only(['index', 'show', 'destroy']);
             Route::post('messages/reply', [ContactController::class, 'reply'])->name('messages.reply');
+
+            Route::resource('orders', OrderController::class)->only(['index', 'show']);
+            Route::put('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
         });
     });
 });

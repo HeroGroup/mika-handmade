@@ -280,7 +280,15 @@
                                                     {{ $order->items->sum('quantity') }}
                                                 </td>
                                                 <td data-label="Status">
-                                                    {{ ucfirst($order->status->value) }}
+                                                    <span @class([
+                                                        'order-status--pending' => $order->status === \App\Enums\OrderStatus::Pending,
+                                                        'order-status--processing' => $order->status === \App\Enums\OrderStatus::Processing,
+                                                        'order-status--accepted' => $order->status === \App\Enums\OrderStatus::Accepted,
+                                                        'order-status--delivered' => $order->status === \App\Enums\OrderStatus::Delivered,
+                                                        'order-status--canceled' => $order->status === \App\Enums\OrderStatus::Canceled,
+                                                    ])>
+                                                        {{ ucfirst($order->status?->value ?? '') }}
+                                                    </span>
                                                 </td>
                                                 <td data-label="Total">
                                                     {{ number_format((float) $order->total_amount, 2) }} {{ env('CURRENCY') }}

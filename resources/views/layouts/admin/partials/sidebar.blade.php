@@ -25,6 +25,12 @@
       </a>
     </li>
     <li class="nav-item">
+      <a class="nav-link" href="{{ route('admin.orders.index') }}">
+        <i class="mdi mdi-cart menu-icon"></i>
+        <span class="menu-title">Orders</span>
+      </a>
+    </li>
+    <li class="nav-item">
       <a class="nav-link" href="{{ route('admin.messages.index') }}">
         <i class="mdi mdi-message-badge menu-icon"></i>
         <span class="menu-title">Messages <b>({{ $messages_count }})</b></span>

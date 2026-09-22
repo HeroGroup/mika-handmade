@@ -26,6 +26,30 @@ class OrderService
             ->paginate(10);
     }
 
+    public function getForAdmin(): LengthAwarePaginator
+    {
+        return Order::with('user')
+            ->latest()
+            ->paginate(30);
+    }
+
+    public function findForAdmin(int $orderId): Order
+    {
+        return Order::with([
+            'user',
+            'items.product.images',
+            'items.productAttribute.attributeValue.attribute',
+            'payment',
+        ])->findOrFail($orderId);
+    }
+
+    public function updateStatus(Order $order, OrderStatus $status): Order
+    {
+        $order->update(['status' => $status]);
+
+        return $order->refresh();
+    }
+
     public function findForUser(User $user, int $orderId): ?Order
     {
         return Order::with([
