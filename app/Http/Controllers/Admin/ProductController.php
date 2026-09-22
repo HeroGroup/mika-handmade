@@ -248,8 +248,15 @@ class ProductController extends Controller
 
         if (! is_array($variants) || empty($variants)) {
             $quantity = (int) $request->input('quantity', 0);
+            $variantAttribute = Attribute::firstOrCreate(['name' => 'Variant']);
+            $attributeValue = AttributeValue::firstOrCreate([
+                'attribute_id' => $variantAttribute->id,
+                'value' => 'Default',
+            ]);
+
             if ($quantity > 0) {
                 $product->attributes()->create([
+                    'attribute_value_id' => $attributeValue->id,
                     'quantity' => $quantity,
                     'price' => $request->price,
                 ]);
@@ -268,18 +275,16 @@ class ProductController extends Controller
             $sizeValue = $variant['size'] ?? null;
             $colorValue = $variant['color'] ?? null;
 
-            if ($sizeValue || $colorValue) {
-                $label = trim(implode(' / ', array_filter([
-                    $sizeValue ? \App\Enums\Attribute::Size->name.': ' . $sizeValue : null,
-                    $colorValue ? \App\Enums\Attribute::Color->name.': ' . $colorValue : null,
-                ])));
-                $variantAttribute = Attribute::firstOrCreate(['name' => 'Variant']);
-                $attributeValue = AttributeValue::firstOrCreate([
-                    'attribute_id' => $variantAttribute->id,
-                    'value' => $label ?: 'Default',
-                ]);
-                $variantData['attribute_value_id'] = $attributeValue->id;
-            }
+            $label = trim(implode(' / ', array_filter([
+                $sizeValue ? \App\Enums\Attribute::Size->name.': ' . $sizeValue : null,
+                $colorValue ? \App\Enums\Attribute::Color->name.': ' . $colorValue : null,
+            ])));
+            $variantAttribute = Attribute::firstOrCreate(['name' => 'Variant']);
+            $attributeValue = AttributeValue::firstOrCreate([
+                'attribute_id' => $variantAttribute->id,
+                'value' => $label ?: 'Default',
+            ]);
+            $variantData['attribute_value_id'] = $attributeValue->id;
 
             $product->attributes()->create($variantData);
         }
