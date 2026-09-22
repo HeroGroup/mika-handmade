@@ -173,7 +173,7 @@
                                     <h2>{{ $address ? 'Update address' : 'Add address' }}</h2>
                                 </div>
                                 <div class="form-wrapper">
-                                    <form method="POST" action="{{ route('client.profile.address') }}">
+                                    <form method="POST" action="{{ route('client.profile.saveAddress') }}">
                                         @csrf
                                         <div class="form-container">
                                             <div class="row">
@@ -191,20 +191,8 @@
                                                 </div>
                                                 <div class="col-md-6 col-12">
                                                     <div class="form-group">
-                                                        <label>Company:</label>
-                                                        <input type="text" name="company" value="{{ old('company', $address?->company) }}" class="form-control" placeholder="Company name">
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6 col-12">
-                                                    <div class="form-group">
                                                         <label>Address 1<sup aria-hidden="true">*</sup>:</label>
                                                         <input type="text" name="address_1" value="{{ old('address_1', $address?->address_1) }}" class="form-control" placeholder="address" required>
-                                                    </div>
-                                                </div> 
-                                                <div class="col-md-6 col-12">
-                                                    <div class="form-group">
-                                                        <label>Address 2:</label>
-                                                        <input type="text" name="address_2" value="{{ old('address_2', $address?->address_2) }}" class="form-control" placeholder="address">
                                                     </div>
                                                 </div> 
                                                 <div class="col-md-6 col-12">
@@ -223,10 +211,7 @@
                                                     <div class="form-group">
                                                         <label>Country<sup aria-hidden="true">*</sup>:</label>
                                                         <select name="country" class="form-control">
-                                                            <option value="India" {{ old('country', $address?->country) == 'India' ? 'selected' : '' }}>India</option>
-                                                            <option value="USA" {{ old('country', $address?->country) == 'USA' ? 'selected' : '' }}>USA</option>
-                                                            <option value="Canada" {{ old('country', $address?->country) == 'Canada' ? 'selected' : '' }}>Canada</option>
-                                                            <option value="Europe" {{ old('country', $address?->country) == 'Europe' ? 'selected' : '' }}>Europe</option>
+                                                            <option value="Armenia" @selected(old('country', $address?->country) == 'Armenia')>Armenia</option>
                                                         </select>
                                                     </div>
                                                 </div>  
@@ -234,13 +219,10 @@
                                                     <div class="form-group">
                                                         <label>Region / State<sup aria-hidden="true">*</sup>:</label>
                                                         <select name="state" class="form-control">
-                                                            <option value="Up" {{ old('state', $address?->state) == 'Up' ? 'selected' : '' }}>Up</option>
-                                                            <option value="Gujarat" {{ old('state', $address?->state) == 'Gujarat' ? 'selected' : '' }}>Gujarat</option>
-                                                            <option value="Mp" {{ old('state', $address?->state) == 'Mp' ? 'selected' : '' }}>Mp</option>
-                                                            <option value="Hp" {{ old('state', $address?->state) == 'Hp' ? 'selected' : '' }}>Hp</option>
+                                                            <option value="Yerevan" @selected(old('state', $address?->state) == 'Yerevan')>Yerevan</option>
                                                         </select>
                                                     </div>
-                                                </div> 
+                                                </div>
                                                 <div class="col-md-6 col-12">
                                                     <div class="form-group">
                                                         <label>Default Address:</label>
@@ -281,7 +263,6 @@
                                         <thead>
                                             <tr>
                                             <th scope="col">Order ID</th>
-                                            <th scope="col">Customer</th>
                                             <th scope="col">No. of Products</th>
                                             <th scope="col">Status</th>
                                             <th scope="col">Total</th> 
@@ -290,160 +271,43 @@
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            @forelse ($orders as $order)
                                             <tr>
-                                            <td data-label="Order ID">
-                                                <a href="/product">
-                                                    #10
-                                                </a>
-                                            </td> 
-                                            <td data-label="Customer">
-                                                John Doe 
-                                            </td>
-                                            <td data-label="No. of Products">
-                                                1
-                                            </td>
-                                            <td data-label="Status"> 
-                                                Pending
-                                            </td>
-                                            <td data-label="Total"> 
-                                                $545.00
-                                            </td> 
-                                            <td data-label="Date Added">
-                                                21 Feb, 2022
-                                            </td>
-                                            <td data-label="Action">
-                                                <a href="{{ route('client.order') }}" class="action">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 19 19" fill="none">
-                                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M9.50007 14.2498C12.7661 14.2498 15.0886 12.1975 16.4487 10.4883C16.9205 9.89553 16.9205 9.10415 16.4487 8.51133C15.0886 6.80214 12.7661 4.74984 9.50007 4.74984C6.23405 4.74984 3.91153 6.80214 2.5514 8.51133C2.07965 9.10415 2.07965 9.89553 2.5514 10.4883C3.91153 12.1975 6.23405 14.2498 9.50007 14.2498ZM17.6877 11.4743C18.6186 10.3044 18.6186 8.6953 17.6877 7.52542C16.2086 5.66679 13.4794 3.1665 9.50007 3.1665C5.52073 3.1665 2.79153 5.66679 1.31248 7.52542C0.381517 8.6953 0.381517 10.3044 1.31248 11.4743C2.79153 13.3329 5.52073 15.8332 9.50007 15.8332C13.4794 15.8332 16.2086 13.3329 17.6877 11.4743Z" fill="#183A40"/>
-                                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M11.083 9.50016C11.083 10.3746 10.3741 11.0835 9.49967 11.0835C8.62522 11.0835 7.91634 10.3746 7.91634 9.50016C7.91634 9.47769 7.91681 9.45533 7.91774 9.43308C8.04115 9.47653 8.1739 9.50016 8.31217 9.50016C8.96801 9.50016 9.49967 8.9685 9.49967 8.31266C9.49967 8.17439 9.47604 8.04164 9.4326 7.91822C9.45484 7.9173 9.4772 7.91683 9.49967 7.91683C10.3741 7.91683 11.083 8.62571 11.083 9.50016ZM12.6663 9.50016C12.6663 11.2491 11.2486 12.6668 9.49967 12.6668C7.75077 12.6668 6.33301 11.2491 6.33301 9.50016C6.33301 7.75126 7.75077 6.3335 9.49967 6.3335C11.2486 6.3335 12.6663 7.75126 12.6663 9.50016Z" fill="#183A40"/>
-                                                    </svg>
-                                                </a>
-                                            </td> 
-                                            </tr>  
+                                                <td data-label="Order ID">
+                                                    #{{ $order->id }}
+                                                </td>
+                                                <td data-label="No. of Products">
+                                                    {{ $order->items->sum('quantity') }}
+                                                </td>
+                                                <td data-label="Status">
+                                                    {{ ucfirst($order->status->value) }}
+                                                </td>
+                                                <td data-label="Total">
+                                                    {{ number_format((float) $order->total_amount, 2) }} {{ env('CURRENCY') }}
+                                                </td>
+                                                <td data-label="Date Added">
+                                                    {{ $order->created_at?->format('d M, Y') }}
+                                                </td>
+                                                <td data-label="Action">
+                                                    <a href="{{ route('client.order', $order->id) }}" class="action">View</a>
+                                                </td>
+                                            </tr>
+                                            @empty
                                             <tr>
-                                            <td data-label="Order ID">
-                                                <a href="/product">
-                                                    #10
-                                                </a>
-                                            </td> 
-                                            <td data-label="Customer">
-                                                John Doe 
-                                            </td>
-                                            <td data-label="No. of Products">
-                                                1
-                                            </td>
-                                            <td data-label="Status"> 
-                                                Pending
-                                            </td>
-                                            <td data-label="Total"> 
-                                                $545.00
-                                            </td> 
-                                            <td data-label="Date Added">
-                                                21 Feb, 2022
-                                            </td>
-                                            <td data-label="Action">
-                                                <a href="{{ route('client.order') }}" class="action">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 19 19" fill="none">
-                                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M9.50007 14.2498C12.7661 14.2498 15.0886 12.1975 16.4487 10.4883C16.9205 9.89553 16.9205 9.10415 16.4487 8.51133C15.0886 6.80214 12.7661 4.74984 9.50007 4.74984C6.23405 4.74984 3.91153 6.80214 2.5514 8.51133C2.07965 9.10415 2.07965 9.89553 2.5514 10.4883C3.91153 12.1975 6.23405 14.2498 9.50007 14.2498ZM17.6877 11.4743C18.6186 10.3044 18.6186 8.6953 17.6877 7.52542C16.2086 5.66679 13.4794 3.1665 9.50007 3.1665C5.52073 3.1665 2.79153 5.66679 1.31248 7.52542C0.381517 8.6953 0.381517 10.3044 1.31248 11.4743C2.79153 13.3329 5.52073 15.8332 9.50007 15.8332C13.4794 15.8332 16.2086 13.3329 17.6877 11.4743Z" fill="#183A40"/>
-                                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M11.083 9.50016C11.083 10.3746 10.3741 11.0835 9.49967 11.0835C8.62522 11.0835 7.91634 10.3746 7.91634 9.50016C7.91634 9.47769 7.91681 9.45533 7.91774 9.43308C8.04115 9.47653 8.1739 9.50016 8.31217 9.50016C8.96801 9.50016 9.49967 8.9685 9.49967 8.31266C9.49967 8.17439 9.47604 8.04164 9.4326 7.91822C9.45484 7.9173 9.4772 7.91683 9.49967 7.91683C10.3741 7.91683 11.083 8.62571 11.083 9.50016ZM12.6663 9.50016C12.6663 11.2491 11.2486 12.6668 9.49967 12.6668C7.75077 12.6668 6.33301 11.2491 6.33301 9.50016C6.33301 7.75126 7.75077 6.3335 9.49967 6.3335C11.2486 6.3335 12.6663 7.75126 12.6663 9.50016Z" fill="#183A40"/>
-                                                    </svg>
-                                                </a>
-                                            </td> 
-                                            </tr>  
-                                            <tr>
-                                            <td data-label="Order ID">
-                                                <a href="/product">
-                                                    #10
-                                                </a>
-                                            </td> 
-                                            <td data-label="Customer">
-                                                John Doe 
-                                            </td>
-                                            <td data-label="No. of Products">
-                                                1
-                                            </td>
-                                            <td data-label="Status"> 
-                                                Pending
-                                            </td>
-                                            <td data-label="Total"> 
-                                                $545.00
-                                            </td> 
-                                            <td data-label="Date Added">
-                                                21 Feb, 2022
-                                            </td>
-                                            <td data-label="Action">
-                                                <a href="{{ route('client.order') }}" class="action">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 19 19" fill="none">
-                                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M9.50007 14.2498C12.7661 14.2498 15.0886 12.1975 16.4487 10.4883C16.9205 9.89553 16.9205 9.10415 16.4487 8.51133C15.0886 6.80214 12.7661 4.74984 9.50007 4.74984C6.23405 4.74984 3.91153 6.80214 2.5514 8.51133C2.07965 9.10415 2.07965 9.89553 2.5514 10.4883C3.91153 12.1975 6.23405 14.2498 9.50007 14.2498ZM17.6877 11.4743C18.6186 10.3044 18.6186 8.6953 17.6877 7.52542C16.2086 5.66679 13.4794 3.1665 9.50007 3.1665C5.52073 3.1665 2.79153 5.66679 1.31248 7.52542C0.381517 8.6953 0.381517 10.3044 1.31248 11.4743C2.79153 13.3329 5.52073 15.8332 9.50007 15.8332C13.4794 15.8332 16.2086 13.3329 17.6877 11.4743Z" fill="#183A40"/>
-                                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M11.083 9.50016C11.083 10.3746 10.3741 11.0835 9.49967 11.0835C8.62522 11.0835 7.91634 10.3746 7.91634 9.50016C7.91634 9.47769 7.91681 9.45533 7.91774 9.43308C8.04115 9.47653 8.1739 9.50016 8.31217 9.50016C8.96801 9.50016 9.49967 8.9685 9.49967 8.31266C9.49967 8.17439 9.47604 8.04164 9.4326 7.91822C9.45484 7.9173 9.4772 7.91683 9.49967 7.91683C10.3741 7.91683 11.083 8.62571 11.083 9.50016ZM12.6663 9.50016C12.6663 11.2491 11.2486 12.6668 9.49967 12.6668C7.75077 12.6668 6.33301 11.2491 6.33301 9.50016C6.33301 7.75126 7.75077 6.3335 9.49967 6.3335C11.2486 6.3335 12.6663 7.75126 12.6663 9.50016Z" fill="#183A40"/>
-                                                    </svg>
-                                                </a>
-                                            </td> 
-                                            </tr>  
-                                            <tr>
-                                            <td data-label="Order ID">
-                                                <a href="/product">
-                                                    #10
-                                                </a>
-                                            </td> 
-                                            <td data-label="Customer">
-                                                John Doe 
-                                            </td>
-                                            <td data-label="No. of Products">
-                                                1
-                                            </td>
-                                            <td data-label="Status"> 
-                                                Pending
-                                            </td>
-                                            <td data-label="Total"> 
-                                                $545.00
-                                            </td> 
-                                            <td data-label="Date Added">
-                                                21 Feb, 2022
-                                            </td>
-                                            <td data-label="Action">
-                                                <a href="{{ route('client.order') }}" class="action">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 19 19" fill="none">
-                                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M9.50007 14.2498C12.7661 14.2498 15.0886 12.1975 16.4487 10.4883C16.9205 9.89553 16.9205 9.10415 16.4487 8.51133C15.0886 6.80214 12.7661 4.74984 9.50007 4.74984C6.23405 4.74984 3.91153 6.80214 2.5514 8.51133C2.07965 9.10415 2.07965 9.89553 2.5514 10.4883C3.91153 12.1975 6.23405 14.2498 9.50007 14.2498ZM17.6877 11.4743C18.6186 10.3044 18.6186 8.6953 17.6877 7.52542C16.2086 5.66679 13.4794 3.1665 9.50007 3.1665C5.52073 3.1665 2.79153 5.66679 1.31248 7.52542C0.381517 8.6953 0.381517 10.3044 1.31248 11.4743C2.79153 13.3329 5.52073 15.8332 9.50007 15.8332C13.4794 15.8332 16.2086 13.3329 17.6877 11.4743Z" fill="#183A40"/>
-                                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M11.083 9.50016C11.083 10.3746 10.3741 11.0835 9.49967 11.0835C8.62522 11.0835 7.91634 10.3746 7.91634 9.50016C7.91634 9.47769 7.91681 9.45533 7.91774 9.43308C8.04115 9.47653 8.1739 9.50016 8.31217 9.50016C8.96801 9.50016 9.49967 8.9685 9.49967 8.31266C9.49967 8.17439 9.47604 8.04164 9.4326 7.91822C9.45484 7.9173 9.4772 7.91683 9.49967 7.91683C10.3741 7.91683 11.083 8.62571 11.083 9.50016ZM12.6663 9.50016C12.6663 11.2491 11.2486 12.6668 9.49967 12.6668C7.75077 12.6668 6.33301 11.2491 6.33301 9.50016C6.33301 7.75126 7.75077 6.3335 9.49967 6.3335C11.2486 6.3335 12.6663 7.75126 12.6663 9.50016Z" fill="#183A40"/>
-                                                    </svg>
-                                                </a>
-                                            </td> 
-                                            </tr>  
-                                            <tr>
-                                            <td data-label="Order ID">
-                                                <a href="/product">
-                                                    #10
-                                                </a>
-                                            </td> 
-                                            <td data-label="Customer">
-                                                John Doe 
-                                            </td>
-                                            <td data-label="No. of Products">
-                                                1
-                                            </td>
-                                            <td data-label="Status"> 
-                                                Pending
-                                            </td>
-                                            <td data-label="Total"> 
-                                                $545.00
-                                            </td> 
-                                            <td data-label="Date Added">
-                                                21 Feb, 2022
-                                            </td>
-                                            <td data-label="Action">
-                                                <a href="{{ route('client.order') }}" class="action">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 19 19" fill="none">
-                                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M9.50007 14.2498C12.7661 14.2498 15.0886 12.1975 16.4487 10.4883C16.9205 9.89553 16.9205 9.10415 16.4487 8.51133C15.0886 6.80214 12.7661 4.74984 9.50007 4.74984C6.23405 4.74984 3.91153 6.80214 2.5514 8.51133C2.07965 9.10415 2.07965 9.89553 2.5514 10.4883C3.91153 12.1975 6.23405 14.2498 9.50007 14.2498ZM17.6877 11.4743C18.6186 10.3044 18.6186 8.6953 17.6877 7.52542C16.2086 5.66679 13.4794 3.1665 9.50007 3.1665C5.52073 3.1665 2.79153 5.66679 1.31248 7.52542C0.381517 8.6953 0.381517 10.3044 1.31248 11.4743C2.79153 13.3329 5.52073 15.8332 9.50007 15.8332C13.4794 15.8332 16.2086 13.3329 17.6877 11.4743Z" fill="#183A40"/>
-                                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M11.083 9.50016C11.083 10.3746 10.3741 11.0835 9.49967 11.0835C8.62522 11.0835 7.91634 10.3746 7.91634 9.50016C7.91634 9.47769 7.91681 9.45533 7.91774 9.43308C8.04115 9.47653 8.1739 9.50016 8.31217 9.50016C8.96801 9.50016 9.49967 8.9685 9.49967 8.31266C9.49967 8.17439 9.47604 8.04164 9.4326 7.91822C9.45484 7.9173 9.4772 7.91683 9.49967 7.91683C10.3741 7.91683 11.083 8.62571 11.083 9.50016ZM12.6663 9.50016C12.6663 11.2491 11.2486 12.6668 9.49967 12.6668C7.75077 12.6668 6.33301 11.2491 6.33301 9.50016C6.33301 7.75126 7.75077 6.3335 9.49967 6.3335C11.2486 6.3335 12.6663 7.75126 12.6663 9.50016Z" fill="#183A40"/>
-                                                    </svg>
-                                                </a>
-                                            </td> 
-                                            </tr>  
+                                                <td colspan="6">No orders found.</td>
+                                            </tr>
+                                            @endforelse
                                         </tbody>
                                     </table>
+                                    <div class="d-flex justify-content-center mt-4">
+                                        {{ $orders->links() }}
+                                    </div>
                                     <div class="right-result-tbl text-right">
-                                        <b>Showing 1</b> to 1 of 1 (1 Pages)
+                                        @if ($orders->total() > 0)
+                                            Showing {{ $orders->firstItem() }} to {{ $orders->lastItem() }} of {{ $orders->total() }} orders
+                                        @else
+                                            No orders found.
+                                        @endif
                                     </div>
                                 </div>
                             </div>

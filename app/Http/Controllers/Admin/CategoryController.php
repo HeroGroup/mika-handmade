@@ -98,7 +98,7 @@ class CategoryController extends Controller
 
             $status = $category->is_active ? 'activated' : 'deactivated';
 
-            return $this->success('category $status!');
+            return $this->success("category {$status}!");
         } catch (\Throwable $th) {
             return $this->fail($th->getMessage());
         }

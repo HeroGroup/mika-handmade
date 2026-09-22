@@ -92,9 +92,9 @@
                                     <span class="cart-sum-right"> {{ number_format(0)}} {{ env('CURRENCY') }}</span>
                                 </li>
                             </ul>
-                            <button  class="btn checkout-btn">
+                            <a href="{{ route('client.checkout') }}" class="btn checkout-btn">
                                 Proceed to checkout
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>

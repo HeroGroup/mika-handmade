@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('last_name');
             $table->string('company')->nullable();
             $table->string('address_1');
-            $table->string('address_2')->nullable();
             $table->string('city');
             $table->string('post_code');
             $table->string('country');
