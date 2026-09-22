@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Product\{StoreProductRequest, UpdateProductRequest};
-use App\Models\{Attribute, AttributeValue, Category, Product, ProductAttribute, ProductCategory, ProductImage, ProductPrice, ProductQuantity};
-use Helpers;
+use App\Models\{Attribute, AttributeValue, Category, Product, ProductCategory, ProductImage, ProductPrice, ProductQuantity};
+use App\Helpers\Helpers;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
