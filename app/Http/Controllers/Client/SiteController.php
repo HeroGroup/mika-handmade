@@ -66,8 +66,9 @@ class SiteController extends Controller
     {
         try {
             $privacy_policy_header = $this->settingService->getValue('PRIVACY_POLICY_HEADER');
+            $privacy_policy_body = $this->settingService->getValue('PRIVACY_POLICY_BODY');
 
-            return view('client.privacy-policy', compact('privacy_policy_header'));
+            return view('client.privacy-policy', compact('privacy_policy_header', 'privacy_policy_body'));
         } catch (\Exception $e) {
             abort(500);
         }
