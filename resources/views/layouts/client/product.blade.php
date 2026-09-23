@@ -1,3 +1,14 @@
+@php
+    $realVariants = $product->attributes->filter(function ($variant) {
+        return ! (
+            strtolower((string) $variant->attributeValue?->value) === 'default'
+            && strtolower((string) $variant->attributeValue?->attribute?->name) === 'variant'
+        );
+    });
+    $hasStock = $realVariants->isNotEmpty()
+        ? $realVariants->contains(fn ($variant) => (int) $variant->quantity > 0)
+        : (int) $product->base_quantity > 0;
+@endphp
 <div class="product-card">
     <div class="product-card-inner">
         <div class="product-img">
@@ -22,9 +33,13 @@
             </div>
             <div class="product-content-center">
                 <p>{{ $product->description }}</p>
-                <div class="price">
-                    <ins>{{ $product->price }} <span class="currency-type">{{ env('CURRENCY') }}</span></ins>
-                </div>
+                @if ($hasStock)
+                    <div class="price">
+                        <ins>{{ $product->price }} <span class="currency-type">{{ env('CURRENCY') }}</span></ins>
+                    </div>
+                @else
+                    <div class="price out-of-stock">Out of stock</div>
+                @endif
                 <div class="product-cart-controls" data-product-id="{{ $id }}" data-product-attribute-id="" style="display:none; align-items:center; gap:6px; margin-top:8px;">
                     <button class="prod-qty-decrease" onclick="changeCartCount('{{ $id }}', '', 'dec')">-</button>
                     <span class="product-cart-count">0</span>

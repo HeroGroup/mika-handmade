@@ -187,7 +187,7 @@
                                     var inStock = true;
                                     var hasVariantSelection = false;
 
-                                    if (selectedVariant && selectedVariant.id) {
+                                    if (selectedVariant && (selectedVariant.id || !window.hasVariantGroups)) {
                                         displayedPrice = selectedVariant.price;
                                         inStock = !!selectedVariant.in_stock;
                                         hasVariantSelection = true;
@@ -201,6 +201,7 @@
                                         if (promptEl) promptEl.style.display = '';
                                         if (addButton) {
                                             addButton.style.display = 'none';
+                                            addButton.setAttribute('data-stock-available', 'false');
                                         }
                                         // hide product page inline controls
                                         try {
@@ -211,7 +212,7 @@
                                         } catch (e) {}
                                     } else {
                                         if (priceElement) {
-                                            priceElement.style.display = '';
+                                            priceElement.style.display = inStock ? '' : 'none';
                                             priceElement.innerHTML = formatVariantPrice(displayedPrice) + ' <span class="currency-type">{{ env('CURRENCY') }}</span>';
                                         }
                                         if (promptEl) promptEl.style.display = 'none';
@@ -224,12 +225,13 @@
                                             }
                                         }
                                         if (addButton) {
-                                            addButton.style.display = '';
-                                            var shouldDisable = hasVariantSelection && !inStock;
-                                            addButton.disabled = shouldDisable;
-                                            addButton.classList.toggle('disabled', shouldDisable);
-                                            addButton.setAttribute('aria-disabled', shouldDisable ? 'true' : 'false');
-                                            addButton.style.pointerEvents = shouldDisable ? 'none' : '';
+                                            var shouldHide = hasVariantSelection && !inStock;
+                                            addButton.style.display = shouldHide ? 'none' : '';
+                                            addButton.setAttribute('data-stock-available', shouldHide ? 'false' : 'true');
+                                            addButton.disabled = shouldHide;
+                                            addButton.classList.toggle('disabled', shouldHide);
+                                            addButton.setAttribute('aria-disabled', shouldHide ? 'true' : 'false');
+                                            addButton.style.pointerEvents = shouldHide ? 'none' : '';
                                         }
                                         // show or hide inline product page controls based on count
                                         try {
@@ -257,7 +259,7 @@
 
                                 function addSelectedVariantToCart(productId, image, title) {
                                     var selectedVariant = getSelectedVariant();
-                                    if (!selectedVariant || !selectedVariant.id) {
+                                    if (!selectedVariant || (window.hasVariantGroups && !selectedVariant.id)) {
                                         return false;
                                     }
 
@@ -269,7 +271,7 @@
                                         return selectedVariant.attributes[key];
                                     }).join(' / ');
 
-                                    addToCart(productId, image, title, selectedVariant.price, selectedVariant.price, selectedVariant.id, variantLabel);
+                                    addToCart(productId, image, title, selectedVariant.price, selectedVariant.price, selectedVariant.id || null, variantLabel);
                                     return false;
                                 }
 

@@ -146,10 +146,15 @@ class SiteController extends Controller
                 return $this->fail('invalid user');
             }
 
+            $productAttributeId = $request->input('product_attribute_id');
+            $productAttributeId = in_array($productAttributeId, [null, '', 'null', 'undefined'], true)
+                ? null
+                : (int) $productAttributeId;
+
             $this->cartService->updateCart(
                 userId: $user->id,
                 productId: (int) $request->product_id,
-                productAttributeId: $request->filled('product_attribute_id') ? (int) $request->product_attribute_id : null,
+                productAttributeId: $productAttributeId,
                 type: (string) $request->type,
             );
 

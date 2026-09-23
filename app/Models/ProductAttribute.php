@@ -42,16 +42,24 @@ class ProductAttribute extends Model
             throw new \InvalidArgumentException('Quantity must be greater than 0.');
         }
 
-        if ($this->quantity < $amount) {
+        $this->refresh();
+        $quantityBefore = $this->quantity;
+
+        $updated = static::query()
+            ->whereKey($this->getKey())
+            ->where('quantity', '>=', $amount)
+            ->decrement('quantity', $amount);
+
+        if ($updated !== 1) {
             throw new \RuntimeException('Insufficient stock available.');
         }
 
-        $this->decrement('quantity', $amount);
+        $this->refresh();
 
         return $this->stockMovements()->create([
             'product_id' => $this->product_id,
             'product_attribute_id' => $this->id,
-            'quantity' => $this->quantity,
+            'quantity' => $quantityBefore,
             'quantity_change' => -$amount,
             'remaining_quantity' => $this->quantity,
             'reason' => $reason,

@@ -244,24 +244,14 @@ class ProductController extends Controller
 
     private function createProductVariants(Product $product, Request $request): void
     {
-        $variants = $request->input('variants', []);
+        $variants = collect($request->input('variants', []))
+            ->filter(function ($variant) {
+                return filled($variant['size'] ?? null) || filled($variant['color'] ?? null);
+            })
+            ->values()
+            ->all();
 
-        if (! is_array($variants) || empty($variants)) {
-            $quantity = (int) $request->input('quantity', 0);
-            $variantAttribute = Attribute::firstOrCreate(['name' => 'Variant']);
-            $attributeValue = AttributeValue::firstOrCreate([
-                'attribute_id' => $variantAttribute->id,
-                'value' => 'Default',
-            ]);
-
-            if ($quantity > 0) {
-                $product->attributes()->create([
-                    'attribute_value_id' => $attributeValue->id,
-                    'quantity' => $quantity,
-                    'price' => $request->price,
-                ]);
-            }
-
+        if (empty($variants)) {
             return;
         }
 
@@ -292,8 +282,45 @@ class ProductController extends Controller
 
     private function syncProductVariants(Product $product, Request $request): void
     {
-        $product->quantities()->delete();
-        $product->attributes()->delete();
-        $this->createProductVariants($product, $request);
+        $variants = collect($request->input('variants', []))
+            ->filter(function ($variant) {
+                return filled($variant['size'] ?? null) || filled($variant['color'] ?? null);
+            })
+            ->values();
+
+        $existingVariants = $product->attributes()
+            ->with('attributeValue')
+            ->get()
+            ->keyBy('attribute_value_id');
+
+        foreach ($variants as $variant) {
+            $sizeValue = $variant['size'] ?? null;
+            $colorValue = $variant['color'] ?? null;
+            $label = trim(implode(' / ', array_filter([
+                $sizeValue ? \App\Enums\Attribute::Size->name.': '.$sizeValue : null,
+                $colorValue ? \App\Enums\Attribute::Color->name.': '.$colorValue : null,
+            ])));
+
+            $variantAttribute = Attribute::firstOrCreate(['name' => 'Variant']);
+            $attributeValue = AttributeValue::firstOrCreate([
+                'attribute_id' => $variantAttribute->id,
+                'value' => $label ?: 'Default',
+            ]);
+
+            $variantData = [
+                'quantity' => (int) ($variant['quantity'] ?? 0),
+                'price' => $variant['price'] ?? $request->price,
+            ];
+
+            $existingVariant = $existingVariants->get($attributeValue->id);
+            if ($existingVariant) {
+                $existingVariant->update($variantData);
+            } else {
+                $product->attributes()->create([
+                    'attribute_value_id' => $attributeValue->id,
+                    ...$variantData,
+                ]);
+            }
+        }
     }
 }

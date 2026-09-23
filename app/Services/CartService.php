@@ -38,9 +38,11 @@ class CartService
                 throw new \InvalidArgumentException('invalid product variant');
             }
 
-            if ((int) $productAttribute->quantity < 1) {
+            if ($type === 'inc' && (int) $productAttribute->quantity < 1) {
                 throw new \RuntimeException('out of stock');
             }
+        } elseif ($type === 'inc' && (int) $product->base_quantity < 1) {
+            throw new \RuntimeException('out of stock');
         }
 
         $query = UserCart::where('user_id', $userId)
@@ -54,8 +56,18 @@ class CartService
 
         $cartItem = $query->first();
 
-        if ($type === 'inc') {
+        if ($type === 'remove') {
+            $cartItem?->delete();
+        } elseif ($type === 'inc') {
             if ($cartItem) {
+                $availableQuantity = $productAttribute
+                    ? (int) $productAttribute->quantity
+                    : (int) $product->base_quantity;
+
+                if ((int) $cartItem->count >= $availableQuantity) {
+                    throw new \RuntimeException('out of stock');
+                }
+
                 $cartItem->increment('count');
             } else {
                 UserCart::create([

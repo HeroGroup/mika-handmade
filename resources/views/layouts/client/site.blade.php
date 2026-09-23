@@ -197,10 +197,11 @@
                 try {
                     var response = JSON.parse(xhr.response);
                     var serverCartItems = normalizeCartItems(response.data || []);
-                    if (Object.keys(serverCartItems).length) {
-                        localStorage.setItem("userCart", JSON.stringify(serverCartItems));
-                    }
+                    localStorage.setItem("userCart", JSON.stringify(serverCartItems));
                     renderCartItems(serverCartItems);
+                    if (typeof updateProductDisplays === 'function') {
+                        updateProductDisplays();
+                    }
                 } catch (error) {
                     renderCartItems(getUserCartFromStorage());
                 }
@@ -230,7 +231,7 @@
             return productAttributeId ? `${productId}-${productAttributeId}` : `${productId}`;
         }
 
-        function sendCartToServer(productId, productAttributeId, type) {
+        function sendCartToServer(productId, productAttributeId, type, callbacks = {}) {
             var formData = createFormData({
                 _token: "{{csrf_token()}}",
                 product_id: productId,
@@ -242,6 +243,7 @@
                 method: "POST",
                 route: "{{ route('client.addToCart') }}",
                 formData,
+                ...callbacks,
             };
 
             sendRequest(params);
@@ -250,9 +252,11 @@
         function addToCart(id, image, title, priceBefore, priceAfter, productAttributeId = null, variantLabel = null) {
             var cartKey = getCartItemKey(id, productAttributeId);
             var userCart = getUserCartFromStorage();
+            var isNewItem = !Object.prototype.hasOwnProperty.call(userCart, cartKey);
+            var updatedCart = JSON.parse(JSON.stringify(userCart));
 
-            if (!Object.keys(userCart).includes(cartKey)) {
-                userCart[cartKey] = {
+            if (isNewItem) {
+                updatedCart[cartKey] = {
                     id: cartKey,
                     productId: id,
                     productAttributeId,
@@ -264,52 +268,67 @@
                     count: 1,
                 };
             } else {
-                userCart[cartKey].count = (userCart[cartKey].count || 1) + 1;
+                updatedCart[cartKey].count = (updatedCart[cartKey].count || 1) + 1;
             }
 
-            localStorage.setItem("userCart", JSON.stringify(userCart));
-            // update UI immediately from local storage and open cart
-            try {
-                renderCartItems(getUserCartFromStorage());
-                openCart();
-            } catch (e) {}
+            sendCartToServer(id, productAttributeId, "inc", {
+                onSuccess: function () {
+                    localStorage.setItem("userCart", JSON.stringify(updatedCart));
+                    try {
+                        renderCartItems(updatedCart);
+                        if (typeof updateProductDisplays === 'function') {
+                            updateProductDisplays();
+                        }
+                        if (isNewItem) {
+                            openCart();
+                        }
+                    } catch (e) {}
 
-            sendCartToServer(id, productAttributeId, "inc");
-            if (window.location.pathname === "/cart") {
-                setTimeout(() => { window.location.reload(); }, 1000);
-            }
+                    if (window.location.pathname === "/cart") {
+                        setTimeout(() => { window.location.reload(); }, 1000);
+                    }
+                }
+            });
         }
+
         function removeFromCart(id, productAttributeId = null) {
             // remove entire item regardless of count
             var normalizedProductAttributeId = productAttributeId || null;
             var cartKey = getCartItemKey(id, normalizedProductAttributeId);
             var userCart = getUserCartFromStorage();
+            var updatedCart = JSON.parse(JSON.stringify(userCart));
 
-            if (Object.keys(userCart).includes(cartKey)) {
-                delete userCart[cartKey];
-                localStorage.setItem("userCart", JSON.stringify(userCart));
+            if (Object.prototype.hasOwnProperty.call(updatedCart, cartKey)) {
+                delete updatedCart[cartKey];
             }
 
-            try {
-                renderCartItems(getUserCartFromStorage());
-                openCart();
-            } catch (e) {}
+            sendCartToServer(id, normalizedProductAttributeId, "remove", {
+                onSuccess: function () {
+                    localStorage.setItem("userCart", JSON.stringify(updatedCart));
+                    try {
+                        renderCartItems(updatedCart);
+                        if (typeof updateProductDisplays === 'function') {
+                            updateProductDisplays();
+                        }
+                    } catch (e) {}
 
-            sendCartToServer(id, normalizedProductAttributeId, "dec");
-            if (window.location.pathname === "/cart") {
-                setTimeout(() => { window.location.reload(); }, 1000);
-            }
+                    if (window.location.pathname === "/cart") {
+                        setTimeout(() => { window.location.reload(); }, 1000);
+                    }
+                }
+            });
         }
 
         function changeCartCount(productId, productAttributeId = null, type = 'inc') {
             var normalizedProductAttributeId = productAttributeId || null;
             var cartKey = getCartItemKey(productId, normalizedProductAttributeId);
             var userCart = getUserCartFromStorage();
+            var updatedCart = JSON.parse(JSON.stringify(userCart));
 
-            if (!Object.keys(userCart).includes(cartKey)) {
+            if (!Object.keys(updatedCart).includes(cartKey)) {
                 if (type === 'inc') {
                     // add item with count 1
-                    userCart[cartKey] = {
+                    updatedCart[cartKey] = {
                         id: cartKey,
                         productId: productId,
                         productAttributeId: normalizedProductAttributeId,
@@ -323,27 +342,30 @@
                     return;
                 }
             } else {
-                var current = userCart[cartKey].count || 1;
+                var current = updatedCart[cartKey].count || 1;
                 if (type === 'inc') {
-                    userCart[cartKey].count = current + 1;
+                    updatedCart[cartKey].count = current + 1;
                 } else {
                     if (current > 1) {
-                        userCart[cartKey].count = current - 1;
+                        updatedCart[cartKey].count = current - 1;
                     } else {
-                        delete userCart[cartKey];
+                        delete updatedCart[cartKey];
                     }
                 }
             }
 
-            localStorage.setItem('userCart', JSON.stringify(userCart));
-            try {
-                renderCartItems(getUserCartFromStorage());
-                openCart();
-            } catch (e) {}
-            sendCartToServer(productId, normalizedProductAttributeId, type === 'inc' ? 'inc' : 'dec');
-            if (window.location.pathname === "/cart") {
-                setTimeout(() => { window.location.reload(); }, 1000);
-            }
+            sendCartToServer(productId, normalizedProductAttributeId, type === 'inc' ? 'inc' : 'dec', {
+                onSuccess: function () {
+                    localStorage.setItem("userCart", JSON.stringify(updatedCart));
+                    try {
+                        renderCartItems(updatedCart);
+                    } catch (e) {}
+
+                    if (window.location.pathname === "/cart") {
+                        setTimeout(() => { window.location.reload(); }, 1000);
+                    }
+                }
+            });
         }
 
         function getCartItemCount(productId, productAttributeId = null) {
@@ -367,7 +389,9 @@
                 try {
                     var addBtn = document.querySelector(`#add-to-cart-btn`);
                     if (addBtn && addBtn.getAttribute('data-product-id') === pid) {
-                        addBtn.style.display = count ? 'none' : '';
+                        addBtn.style.display = addBtn.getAttribute('data-stock-available') === 'false'
+                            ? 'none'
+                            : (count ? 'none' : '');
                     }
                 } catch (e) {}
             }
@@ -386,7 +410,9 @@
                         // if variant selected is present, use variant-specific count
                         var selectedPaid = paid || addBtn.getAttribute('data-product-attribute-id') || '';
                         var selectedCount = getCartItemCount(pid, selectedPaid);
-                        addBtn.style.display = selectedCount ? 'none' : '';
+                        addBtn.style.display = addBtn.getAttribute('data-stock-available') === 'false'
+                            ? 'none'
+                            : (selectedCount ? 'none' : '');
                     }
                     // also toggle inline product page controls if present
                     var pageControls = document.querySelectorAll('.product-page-cart');

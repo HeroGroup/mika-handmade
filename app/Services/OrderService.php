@@ -143,6 +143,13 @@ class OrderService
                     Log::warning('Stock decrease failed: ' . $e->getMessage());
                     throw $e;
                 }
+            } else {
+                $product = $cart->product;
+                if ((int) $product->base_quantity < $quantity) {
+                    throw new \RuntimeException('Insufficient stock available.');
+                }
+
+                $product->decrement('base_quantity', $quantity);
             }
         }
 

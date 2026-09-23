@@ -211,19 +211,26 @@
                 </div>
               </div>
               @php
-                $existingVariants = $product->attributes()->get()->map(function ($variant) {
+                $existingVariants = $product->attributes()->get()->filter(function ($variant) {
+                  return ! (
+                    strtolower((string) $variant->attributeValue?->value) === 'default'
+                    && strtolower((string) $variant->attributeValue?->attribute?->name) === 'variant'
+                  );
+                })->map(function ($variant) {
                     $size = '';
                     $color = '';
                     $attributeValue = $variant->attributeValue;
                     if ($attributeValue) {
-                        $value = $attributeValue->value;
-                        if (str_contains($value, app\Enums\Attribute::Size->value.':')) {
-                            preg_match('/Size:\s*(.+)/', $value, $sizeMatches);
-                            $size = $sizeMatches[1] ?? '';
-                        }
-                        if (str_contains($value, app\Enums\Attribute::Color->value.':')) {
-                            preg_match('/Color:\s*(.+)/', $value, $colorMatches);
-                            $color = $colorMatches[1] ?? '';
+                    foreach (preg_split('/\s*\/\s*/', $attributeValue->value) as $part) {
+                      [$name, $value] = array_pad(explode(':', $part, 2), 2, '');
+                      $name = strtolower(trim($name));
+                      $value = trim($value);
+
+                      if ($name === 'size') {
+                        $size = $value;
+                      } elseif ($name === 'color') {
+                        $color = $value;
+                      }
                         }
                     }
 

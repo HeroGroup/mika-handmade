@@ -21,6 +21,10 @@ class ProductService
 
         $variantOptions = [];
         foreach ($product->attributes as $attribute) {
+            if ($this->isDefaultProductAttribute($attribute)) {
+                continue;
+            }
+
             $variantOptions[] = $this->buildVariantOption($attribute);
         }
 
@@ -28,8 +32,8 @@ class ProductService
             $variantOptions[] = [
                 'id' => null,
                 'price' => (float) $product->price,
-                'quantity' => (int) $product->quantity,
-                'in_stock' => (int) $product->quantity > 0,
+                'quantity' => (int) $product->base_quantity,
+                'in_stock' => (int) $product->base_quantity > 0,
                 'attributes' => [],
                 'label' => 'Default',
             ];
@@ -63,6 +67,12 @@ class ProductService
         }
 
         return array_values($variantGroups);
+    }
+
+    private function isDefaultProductAttribute(ProductAttribute $attribute): bool
+    {
+        return strtolower((string) $attribute->attributeValue?->value) === 'default'
+            && strtolower((string) $attribute->attributeValue?->attribute?->name) === 'variant';
     }
 
     private function buildVariantOption(ProductAttribute $attribute): array
