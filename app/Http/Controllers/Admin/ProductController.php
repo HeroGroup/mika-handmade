@@ -114,7 +114,7 @@ class ProductController extends Controller
             
             if ($request->has('variants')) {
                 $this->syncProductVariants($product, $request);
-            } elseif ($product->base_quantity != $request->quantity) {
+            } elseif ($product->base_quantity != $request->quantity && $request->quantity >= 0) {
                 ProductQuantity::create([
                     'product_id' => $product->id,
                     'quantity' => $request->quantity

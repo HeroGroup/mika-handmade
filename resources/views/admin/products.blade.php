@@ -272,25 +272,21 @@
             <div class="form-group row">
               <div class="col-md-6">
                 <label for="title">Title</label>
-                <input class="form-control" name="title" value="{{old('title')}}" placeholder="Enter product title"
-                  required />
+                <input class="form-control" name="title" value="{{old('title')}}" required />
               </div>
               <div class="col-md-6">
                 <label for="description">Description</label>
-                <input class="form-control" name="description" value="{{old('description')}}"
-                  placeholder="Enter product description" />
+                <input class="form-control" name="description" value="{{old('description')}}" />
               </div>
             </div>
             <div class="form-group row">
               <div class="col-md-6">
                 <label for="price">Price</label>
-                <input class="form-control" name="price" value="{{old('price')}}" placeholder="Enter product price"
-                  required />
+                <input class="form-control" name="price" value="{{old('price')}}" required />
               </div>
               <div class="col-md-6">
                 <label for="quantity">Quantity</label>
-                <input class="form-control" name="quantity" value="{{old('quantity')}}"
-                  placeholder="Enter product quantity" required />
+                <input class="form-control" name="quantity" value="{{old('quantity')}}" />
               </div>
             </div>
             <div class="form-group row">
